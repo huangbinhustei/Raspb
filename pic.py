@@ -74,7 +74,7 @@ def recording(msg, doc=False, internet=False):
 def drawing(img, faces):
     for x, y, w, h in faces:
         cv2.rectangle(img, (x, y), (x + w, y + h), (50, 255, 255), 1)
-    cv2.putText(img, time.ctime(), (10, 20), 1, 1, (50, 255, 255), 1, cv2.LINE_AA)
+    cv2.putText(img, time.strftime('%Y%m%d_%X'), (10, 20), 1, 1, (50, 255, 255), 1, cv2.LINE_AA)
 
 
 def taking():
@@ -95,7 +95,7 @@ def taking():
             raw_capture.truncate(0)
             temperature, percent = get_cpu_info()
 
-            msg = [time.ctime(), temperature, percent]
+            msg = [time.strftime('%Y%m%d_%X'), temperature, percent]
             now = int(time.time())
             if float(temperature) >= max_temp:
                 msg.append('温度太高')
@@ -124,7 +124,7 @@ def taking():
                     msg.append('欢迎回家')
                 else:
                     msg.append('发现有人')
-                    qiniu_put(file_path, time.ctime(), bucket_name='bxin', timeout=3600)
+                    qiniu_put(file_path, time.strftime('%Y%m%d_%X'), bucket_name='bxin', timeout=3600)
                 recording('\t'.join(msg), doc=True, internet=True)
 
 
