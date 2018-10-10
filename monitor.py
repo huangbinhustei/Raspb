@@ -66,7 +66,7 @@ def single_line_maker(start, end):
     line_space = Line(width=640, height=360, title='DISK 监控')
     stamps, cpu_percents, cpu_temps, free_rams, free_disks = lining_single()
     line_cpu.add('CPU 使用率', stamps, cpu_percents, mark_point=["max", "min"], mark_line=["average"], is_smooth=True)
-    line_cpu.add('CPU 温度', stamps, cpu_temps, mark_line=["max", "min"], is_smooth=True)
+    line_cpu.add('CPU 温度', stamps, cpu_temps, mark_point=["max", "min"], is_smooth=True)
     line_space.add('剩余内存', stamps, free_rams, mark_line=["average"])
     line_space.add('剩余磁盘', stamps, free_disks)
 
@@ -125,7 +125,7 @@ def group_line_maker(start, end, group_by):
                                                                                free_disks_bottom] = lining_grouped()
     line_cpu.add('使用率 TOP', stamps, cpu_percents_top, is_smooth=True)
     line_cpu.add('使用率 BOTTOM', stamps, cpu_percents_bottom, is_smooth=True)
-    line_cpu.add('温度 TOP', stamps, cpu_temps_top, is_smooth=True)
+    line_cpu.add('温度 TOP', stamps, cpu_temps_top, is_smooth=True, mark_point=['max'])
     line_cpu.add('温度 BOTTOM', stamps, cpu_temps_bottom, is_smooth=True)
     line_space.add('剩余内存 TOP', stamps, free_rams_top, is_smooth=True)
     line_space.add('剩余内存 BOTTOM', stamps, free_rams_bottom, is_smooth=True)
@@ -140,7 +140,7 @@ def group_line_maker(start, end, group_by):
 def last_month():
     # 按天显示
     end = int(time.time())
-    end = 1539100383
+    # end = 1539100383
     start = end - 86400 * 30
 
     line_cpu, line_space, js_list = group_line_maker(start, end, 'day')
@@ -158,7 +158,7 @@ def last_month():
 def last_week():
     # 按天显示
     end = int(time.time())
-    end = 1539100383
+    # end = 1539100383
     start = end - 86400 * 8
 
     line_cpu, line_space, js_list = group_line_maker(start, end, 'day')
@@ -177,7 +177,7 @@ def last_day():
     # 按小时显示
     dawn = int(time.time() / 86400) * 86400 - 28800
     end = int(time.time())
-    end = 1539100383
+    # end = 1539100383
     start = end - 86400 * 1
 
     line_cpu, line_space, js_list = group_line_maker(start, end, 'hour')
@@ -196,7 +196,7 @@ def last_day():
 def recent():
     dawn = int(time.time() / 86400) * 86400 - 28800
     end = int(time.time())
-    end = 1539100383
+    # end = 1539100383
     start = end - 3600
 
     # 按照分钟显示

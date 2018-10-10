@@ -1,6 +1,14 @@
-.DS_Store
-.idea*
+.*
 __pycache__/*
 
-bxin.py
 *.db
+*.xml
+*.out
+*.cfg
+*.txt
+bxin.py
+
+bin/
+Persons/
+lib/
+share/
