@@ -21,13 +21,6 @@ size = (resX, resY)
 last_push = 0
 
 
-def get_cpu_temperature():
-    # Return CPU temperature as a character string
-    res = os.popen('vcgencmd measure_temp').readline()
-    temperature = res.replace('temp=', '').replace("'C\n", "")
-    return temperature
-
-
 def is_face_in(frame):
     return face_cascade.detectMultiScale(
         cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY),
@@ -54,22 +47,27 @@ def is_famaly(buf, safe=75, normal=50):
 
 
 def recording(tool_id, msg, img):
+    """
+    tool_id == 0：写日志
+    tool_id == 1：写日志 + 保存 + 发消息
+    tool_id == 2：写日志 + 保存 + 发消息 + 上云
+    """
     print('\t'.join(msg))
     with open(os.path.join(basedir, 'recording.txt'), 'a') as f:
         f.write('\t'.join(msg) + '\n')
-    # tool_id == 0：只写日志
 
     if tool_id >= 1:
-        # 写日志 + 保存 + 报警，不上云
         name = time.strftime('%Y%m%d_%H%M%S') + '.jpg'
         file_path = os.path.join(basedir, 'Persons', name)
         cv2.imwrite(file_path, img)
-        global last_push
+
+    global last_push
+    if time.time() - last_push >= 60:
         title = '\t'.join(msg)
         cont = '\n\n'.join(msg)
-        if time.time() - last_push >= 60:
-            send_msg(title, cont)
-            last_push = time.time()
+        send_msg(title, cont)
+        last_push = time.time()
+
     if tool_id >= 2:
         print('%s\t本来应该上云的，暂时不上', name)
         # qiniu_put(file_path, name, bucket_name='bxin', timeout=3600)
@@ -100,7 +98,6 @@ def taking():
         raw_capture.truncate(0)
         for frame in camera.capture_continuous(raw_capture, format='bgr', use_video_port=True):
             raw_capture.truncate(0)
-            temperature = get_cpu_temperature()
 
             msg = [time.strftime('%Y%m%d_%X')]
             now = int(time.time())
