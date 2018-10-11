@@ -14,10 +14,7 @@ from bxin import *
 
 xml = os.path.join(basedir, 'haarcascade_frontalface_default.xml')
 face_cascade = cv2.CascadeClassifier(xml)
-resX = 640
-resY = 480
-size = (resX, resY)
-
+size = (960, 720)
 last_push = 0
 
 
@@ -42,11 +39,14 @@ def is_famaly(buf, safe=75, normal=50):
             return 1, tmp['user_id'] + ':' + str(round(ret, 1))
         else:
             return 2, tmp['user_id'] + ':' + str(round(ret, 1))
+    elif res['error_code'] in (223114, 222202, 222203, 222205, 222206):
+        # 图片模糊、没有识别到人、网络错误等，都暂不保存图片。
+        return 0, res['error_msg']
     else:
         return 1, res['error_msg']
 
 
-def recording(tool_id, msg, img):
+def recording(tool_id, msg, buf):
     """
     tool_id == 0：写日志
     tool_id == 1：写日志 + 保存 + 发消息
@@ -59,7 +59,8 @@ def recording(tool_id, msg, img):
     if tool_id >= 1:
         name = time.strftime('%Y%m%d_%H%M%S') + '.jpg'
         file_path = os.path.join(basedir, 'Persons', name)
-        cv2.imwrite(file_path, img)
+        with open(file_path, 'wb') as f:
+            f.write(buf)
 
     global last_push
     if time.time() - last_push >= 60:
@@ -84,12 +85,6 @@ def drawing(img, faces, info):
 
 def taking():
     print('开始保护')
-    big_step = 120
-    small_step = 10
-    big = int(time.time())
-    small = int(time.time()) + small_step
-
-
 
     with PiCamera() as camera:
         camera.resolution = size
@@ -100,27 +95,20 @@ def taking():
             raw_capture.truncate(0)
 
             msg = [time.strftime('%Y%m%d_%X')]
-            now = int(time.time())
+            # now = int(time.time())
 
             img = frame.array
             faces = is_face_in(img)
 
             if isinstance(faces, tuple):
-                # 如果没有发现人脸
+                # 没有发现人脸
                 time.sleep(1)
-            elif small <= now <= big:
-                msg.append(str(big_step) + '秒内不拍照')
-                recording(0, msg, img)
             else:
-                if now > big:
-                    # 距离上次发现人很久，重置时间窗口
-                    small = now + small_step
-                    big = now + big_step
                 _, buf = cv2.imencode('.jpg', img)
                 tool_id, info = is_famaly(buf)
                 msg.append(info)
                 drawing(img, faces, info)
-                recording(tool_id, msg, img)
+                recording(tool_id, msg, buf)
 
 
 if __name__ == '__main__':
