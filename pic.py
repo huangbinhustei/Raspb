@@ -18,6 +18,8 @@ resX = 640
 resY = 480
 size = (resX, resY)
 
+last_push = 0
+
 
 def get_cpu_temperature():
     # Return CPU temperature as a character string
@@ -35,40 +37,50 @@ def is_face_in(frame):
     )
 
 
-def is_famaly(path, min_score=80):
-    with open(path, 'rb') as f:
-        b64s = str(base64.b64encode(f.read()), 'utf-8')
-    res = face.search(b64s, 'BASE64', 'Famaly', {'max_user_num': 3})
-    if res['error_code'] != 0:
-        print(res)
-        return False
-    pr = ''
-    door = 0
-    for info in res['result']['user_list']:
-        pr += info['user_id'] + ':' + str(round(info['score'], 1)) + '%\t'
-        door = max(door, info['score'])
+def is_famaly(buf, safe=75, normal=50):
+    b64s = str(base64.b64encode(buf), 'utf-8')
+    res = face.search(b64s, 'BASE64', 'Famaly', {'quality_control': 'LOW'})
+    if 0 == res['error_code']:
+        tmp = res['result']['user_list'][0]
+        ret = tmp['score']
+        if ret >= safe:
+            return 0, tmp['user_id'] + ':' + str(round(ret, 1))
+        elif ret >= normal:
+            return 1, tmp['user_id'] + ':' + str(round(ret, 1))
+        else:
+            return 2, tmp['user_id'] + ':' + str(round(ret, 1))
+    else:
+        return 1, res['error_msg']
 
-    print(pr)
-    return door >= min_score
 
-
-def recording(msg, doc=False, internet=False):
+def recording(tool_id, msg, img):
     print('\t'.join(msg))
-    if doc:
-        with open(os.path.join(basedir, 'recording.txt'), 'a') as f:
-            f.write('\t'.join(msg) + '\n')
+    with open(os.path.join(basedir, 'recording.txt'), 'a') as f:
+        f.write('\t'.join(msg) + '\n')
+    # tool_id == 0：只写日志
 
-    if internet:
+    if tool_id >= 1:
+        # 写日志 + 保存 + 报警，不上云
+        name = time.strftime('%Y%m%d_%H%M%S') + '.jpg'
+        file_path = os.path.join(basedir, 'Persons', name)
+        cv2.imwrite(file_path, img)
+        global last_push
         title = '\t'.join(msg)
         cont = '\n\n'.join(msg)
-        send_msg(title, cont)
+        if time.time() - last_push >= 60:
+            send_msg(title, cont)
+            last_push = time.time()
+    if tool_id >= 2:
+        print('%s\t本来应该上云的，暂时不上', name)
+        # qiniu_put(file_path, name, bucket_name='bxin', timeout=3600)
 
 
-def drawing(img, faces):
+def drawing(img, faces, info):
     color = (50, 255, 255)
     for x, y, w, h in faces:
         cv2.rectangle(img, (x, y), (x + w, y + h), color, 1)
-    name = time.strftime('%Y%m%d_%X')
+    cv2.rectangle(img, (0, 0), (180, 25), (0, 0, 0), -1)
+    name = info
     cv2.putText(img, name, (10, 20), 1, 1, color, 1, cv2.LINE_AA)
 
 
@@ -76,10 +88,10 @@ def taking():
     print('开始保护')
     big_step = 120
     small_step = 10
-    big = int(time.time()) + big_step
+    big = int(time.time())
     small = int(time.time()) + small_step
 
-    max_temp = 80
+
 
     with PiCamera() as camera:
         camera.resolution = size
@@ -92,36 +104,26 @@ def taking():
 
             msg = [time.strftime('%Y%m%d_%X')]
             now = int(time.time())
-            if float(temperature) >= max_temp:
-                msg.append('温度太高')
-                recording(msg, doc=True, internet=True)
-                exit()
+
             img = frame.array
             faces = is_face_in(img)
 
             if isinstance(faces, tuple):
                 # 如果没有发现人脸
                 time.sleep(1)
-                continue
-
-            if small <= now <= big:
+            elif small <= now <= big:
                 msg.append(str(big_step) + '秒内不拍照')
-                recording(msg, doc=True)
+                recording(0, msg, img)
             else:
                 if now > big:
                     # 距离上次发现人很久，重置时间窗口
                     small = now + small_step
                     big = now + big_step
-                drawing(img, faces)
-                file_path = os.path.join(basedir, 'Persons', str(now) + '.jpg')
-                cv2.imwrite(file_path, img)
-                if is_famaly(file_path):
-                    msg.append('欢迎回家')
-                else:
-                    msg.append('发现有人')
-                    name = time.strftime('%Y%m%d_%X') + '.jpg'
-                    qiniu_put(file_path, name, bucket_name='bxin', timeout=3600)
-                recording(msg, doc=True, internet=True)
+                _, buf = cv2.imencode('.jpg', img)
+                tool_id, info = is_famaly(buf)
+                msg.append(info)
+                drawing(img, faces, info)
+                recording(tool_id, msg, img)
 
 
 if __name__ == '__main__':
