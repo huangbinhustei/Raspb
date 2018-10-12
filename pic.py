@@ -17,7 +17,7 @@ from bxin import *
 xml = os.path.join(basedir, 'haarcascade_frontalface_default.xml')
 face_cascade = cv2.CascadeClassifier(xml)
 size = (960, 720)
-last_push = time.time(), 0
+last_push = [0, time.time(), time.time()]
 
 task = queue.Queue(maxsize=15)
 
@@ -57,15 +57,13 @@ def dealing():
             with open(file_path, 'wb') as f:
                 f.write(buf)
 
-        global last_push
-        if tool_id == last_push[1] and time.time() - last_push[0] <= 60:
-            # 相同的推送原因， 60 秒内只推送一次。推送原因不同时不受限制。
-            pass
-        else:
-            title = msg[1]
-            cont = '\n\n'.join(msg)
-            send_msg(title, cont)
-            last_push = time.time(), tool_id
+            global last_push
+            if time.time() - last_push[tool_id] >= 60:
+                # 相同的推送原因，60 秒内只推送一次。推送原因不同时不受限制。
+                title = msg[1]
+                cont = '\n\n'.join(msg)
+                send_msg(title, cont)
+                last_push[tool_id] = time.time()
 
         if tool_id >= 2:
             print('%s\t本来应该上云的，暂时不上', name)
