@@ -48,7 +48,7 @@ def dealing():
         tool_id == 2：写日志 + 保存 + 发消息 + 上云
         """
         print('\t'.join(msg))
-        with open(os.path.join(basedir, 'recording.txt'), 'a') as f:
+        with open(os.path.join(basedir, 'Persons', 'recording.txt'), 'a') as f:
             f.write('\t'.join(msg) + '\n')
 
         if tool_id >= 1:

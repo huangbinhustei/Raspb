@@ -6,6 +6,7 @@ __pycache__/*
 *.out
 *.cfg
 *.txt
+*.h264
 bxin.py
 
 bin/
