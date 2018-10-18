@@ -2,7 +2,7 @@ import os
 import time
 import sys
 
-from flask import Flask, render_template
+from flask import Flask, render_template, request
 from sqlalchemy import and_
 from pyecharts import Line, Page
 
@@ -31,7 +31,7 @@ def get_stamp(plot, group_by):
     if 'minute' == group_by:
         return time.strftime('%H:%M', time.gmtime(plot + 28800))
     elif 'hour' == group_by:
-        return time.strftime('%H', time.gmtime(plot + 28800 - 3540))
+        return time.strftime('%d-%H', time.gmtime(plot + 28800 - 3540))
     elif 'day' == group_by:
         return time.strftime('%m%d', time.gmtime(plot + 28800 - 86340))
     else:
@@ -67,7 +67,7 @@ def single_line_maker(start, end):
 
     line_cpu = Line(width=width, height=height, title='CPU 监控')
     line_space = Line(width=width, height=height, title='DISK 监控')
-    if time.localtime().tm_hour >= 21:
+    if time.localtime().tm_hour >= 21 or time.localtime().tm_hour <= 6:
         line_cpu.use_theme('dark')
         line_space.use_theme('dark')
     stamps, cpu_percents, cpu_temps, free_rams, free_disks = lining_single()
@@ -134,6 +134,9 @@ def group_line_maker(start, end, group_by):
 
     line_cpu = Line(width=width, height=height, title='CPU 监控')
     line_space = Line(width=width, height=height, title='DISK 监控')
+    if time.localtime().tm_hour >= 21 or time.localtime().tm_hour <= 6:
+        line_cpu.use_theme('dark')
+        line_space.use_theme('dark')
     stamps, [cpu_percents_top, cpu_temps_top, free_rams_top, free_disks_top], [cpu_percents_average, cpu_temps_average, free_rams_average, free_disks_average], [cpu_percents_bottom, cpu_temps_bottom, free_rams_bottom, free_disks_bottom] = lining_grouped()
     line_cpu.add('使用率峰值', stamps, cpu_percents_top, is_smooth=True, line_width=2)
     line_cpu.add('平均使用率', stamps, cpu_percents_average, is_smooth=True, line_width=2)
@@ -187,7 +190,12 @@ def last_day():
     # 按小时显示
     dawn = int(time.time() / 86400) * 86400 - 28800
     end = int(time.time())
-    start = end - 86400 * 1
+
+    try:
+        days = request.args.get('days')
+        start = end - 86400 * int(days)
+    except:
+        start = end - 86400 * 1
 
     line_cpu, line_space, js_list = group_line_maker(start, end, 'hour')
 
@@ -206,7 +214,11 @@ def recent():
     dawn = int(time.time() / 86400) * 86400 - 28800
     end = int(time.time())
     # end = 1539100383
-    start = end - 3600
+    try:
+        hours = request.args.get('hours')
+        start = end - 3600 * int(hours)
+    except:
+        start = end - 3600 * 1
 
     # 按照分钟显示
 
