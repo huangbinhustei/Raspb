@@ -13,3 +13,4 @@ bin/
 Persons/
 lib/
 share/
+*.pyc

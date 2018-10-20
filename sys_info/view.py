@@ -5,10 +5,11 @@ import sys
 from flask import Flask, render_template, request
 from sqlalchemy import and_
 from pyecharts import Line, Page
+from sheets import DBSession, pre_create, Info
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 sys.path.append(basedir)
-from sys_info import *
+
 
 app = Flask(__name__)
 app.config.update(DEBUG=True)
@@ -58,10 +59,10 @@ def single_line_maker(start, end):
                 free_rams.append(records[i // 60].free_ram)
                 free_disks.append(records[i // 60].free_disk)
             else:
-                cpu_percents.append(0)
-                cpu_temps.append(0)
-                free_rams.append(0)
-                free_disks.append(0)
+                cpu_percents.append('')
+                cpu_temps.append('')
+                free_rams.append('')
+                free_disks.append('')
 
         return stamps, cpu_percents, cpu_temps, free_rams, free_disks
 
@@ -109,9 +110,9 @@ def group_line_maker(start, end, group_by):
                         averages[ind].append(new_info[ind])
                         bottoms[ind] = min(bottoms[ind], new_info[ind])
                 else:
-                    tops = [0, 0, 0, 0]
-                    averages = [0, 0, 0, 0]
-                    bottoms = [0, 0, 0, 0]
+                    tops = ['', '', '', '']
+                    averages = ['', '', '', '']
+                    bottoms = ['', '', '', '']
             elif flag != stamps[-1]:
                 stamps.append(flag)
                 for ind in range(4):
@@ -137,7 +138,7 @@ def group_line_maker(start, end, group_by):
     if time.localtime().tm_hour >= 21 or time.localtime().tm_hour <= 6:
         line_cpu.use_theme('dark')
         line_space.use_theme('dark')
-    stamps, [cpu_percents_top, cpu_temps_top, free_rams_top, free_disks_top], [cpu_percents_average, cpu_temps_average, free_rams_average, free_disks_average], [cpu_percents_bottom, cpu_temps_bottom, free_rams_bottom, free_disks_bottom] = lining_grouped()
+    stamps, [cpu_percents_top, cpu_temps_top, _, _], [cpu_percents_average, cpu_temps_average, free_rams_average, _], [_, _, free_rams_bottom, free_disks_bottom] = lining_grouped()
     line_cpu.add('使用率峰值', stamps, cpu_percents_top, is_smooth=True, line_width=2)
     line_cpu.add('平均使用率', stamps, cpu_percents_average, is_smooth=True, line_width=2)
     line_cpu.add('温度峰值', stamps, cpu_temps_top, is_smooth=True, mark_line=['max'], line_width=2)
@@ -211,7 +212,7 @@ def last_day():
 @app.route("/")
 @app.route("/recent")
 def recent():
-    dawn = int(time.time() / 86400) * 86400 - 28800
+    # dawn = int(time.time() / 86400) * 86400 - 28800
     end = int(time.time())
     # end = 1539100383
     try:

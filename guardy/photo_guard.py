@@ -10,16 +10,21 @@ from picamera import PiCamera
 from picamera.array import PiRGBArray
 
 
+
 basedir = os.path.abspath(os.path.dirname(__file__))
-sys.path.append(basedir)
+sys.path.append(os.path.join(basedir, os.path.pardir))
 from bxin import *
+from msg2io import OLED, BUZZER
+
 
 xml = os.path.join(basedir, 'haarcascade_frontalface_default.xml')
 face_cascade = cv2.CascadeClassifier(xml)
 size = (960, 720)
-last_push = [0, time.time(), time.time()]
+last_push = [0, 0, 0]
+task = queue.Queue(maxsize=5)
 
-task = queue.Queue(maxsize=15)
+oleder = OLED()
+buzzer = BUZZER()
 
 
 def is_family(buf, safe=75, normal=50):
@@ -29,11 +34,11 @@ def is_family(buf, safe=75, normal=50):
         tmp = res['result']['user_list'][0]
         ret = tmp['score']
         if ret >= safe:
-            return 0, tmp['user_id'] + ':' + str(round(ret, 1))
+            return 0, tmp['user_id'] + ' : ' + str(round(ret, 1))
         elif ret >= normal:
-            return 1, tmp['user_id'] + ':' + str(round(ret, 1))
+            return 1, tmp['user_id'] + ' : ' + str(round(ret, 1))
         else:
-            return 2, tmp['user_id'] + ':' + str(round(ret, 1))
+            return 2, tmp['user_id'] + ' : ' + str(round(ret, 1))
     elif res['error_code'] in (223114, 222202, 222203, 222205, 222206):
         # 图片模糊、没有识别到人、网络错误等，都暂不保存图片。
         return 0, res['error_msg']
@@ -48,6 +53,7 @@ def recording(tool_id, msg, buf, stamp):
     tool_id == 2：写日志 + 保存 + 发消息 + 上云
     """
     print('\t'.join(msg))
+    oleder.show(msg)
     with open(os.path.join(basedir, 'Persons', 'recording.txt'), 'a') as f:
         f.write('\t'.join(msg) + '\n')
 
@@ -64,6 +70,7 @@ def recording(tool_id, msg, buf, stamp):
             cont = '\n\n'.join(msg)
             send_msg(title, cont)
             last_push[tool_id] = time.time()
+            buzzer.beep(0.1, 1)
 
     if tool_id >= 2:
         print('%s\t本来应该上云的，暂时不上', name)
@@ -109,13 +116,16 @@ def taking():
             faces = is_face_in(img)
             if isinstance(faces, tuple):
                 # 没有发现人脸
+                
+                if task.empty:
+                    oleder.cls()
                 time.sleep(0.5)
             else:
                 drawing(img, faces)
                 _, buf = cv2.imencode('.jpg', img)
                 try:
                     task.put_nowait([buf, time.time()])
-                except Queue.Full:
+                except:
                     pass
 
 if __name__ == '__main__':
