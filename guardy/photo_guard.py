@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import os
 import sys
 import time
@@ -8,7 +9,6 @@ import queue
 import cv2
 from picamera import PiCamera
 from picamera.array import PiRGBArray
-
 
 
 basedir = os.path.abspath(os.path.dirname(__file__))
@@ -73,7 +73,7 @@ def recording(tool_id, msg, buf, stamp):
             buzzer.beep(0.1, 1)
 
     if tool_id >= 2:
-        print('%s\t本来应该上云的，暂时不上', name)
+        print('%s:Should sent to QINIU, delayed', name)
         # qiniu_put(file_path, name, bucket_name='bxin', timeout=3600)
 
 
@@ -103,6 +103,7 @@ def drawing(img, faces):
     # name = info
     # cv2.putText(img, name, (10, 20), 1, 1, color, 1, cv2.LINE_AA)
 
+
 def taking():
     with PiCamera() as camera:
         camera.resolution = size
@@ -116,7 +117,6 @@ def taking():
             faces = is_face_in(img)
             if isinstance(faces, tuple):
                 # 没有发现人脸
-                
                 if task.empty:
                     oleder.cls()
                 time.sleep(0.5)
@@ -131,5 +131,5 @@ def taking():
 if __name__ == '__main__':
     t1 = threading.Thread(target=dealing)
     t1.start()
-    print('开始保护')
+    print('Start Guard!')
     taking()

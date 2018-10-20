@@ -25,6 +25,7 @@ class OLED:
         # Initialize library.
         self.disp.begin()
         # Clear display.
+        self.show_lock = 0
         self.cls()
                 
         self.image = Image.new('1', (self.disp.width, self.disp.height))
@@ -42,6 +43,7 @@ class OLED:
 
         self.font = ImageFont.truetype('/usr/share/fonts/truetype/wqy/wqy-microhei.ttc', 16)
         self.offset = 22
+        
 
     def show(self, msg, x=0):
         self.draw.rectangle((0, 0, self.disp.width, self.disp.height), outline=0, fill=0)
@@ -53,11 +55,17 @@ class OLED:
         # Display image.
         self.disp.image(self.image)
         self.disp.display()
+        self.show_lock = time.time()
         # time.sleep(0.1)
 
     def cls(self):
-        self.disp.clear()
-        self.disp.display()
+        if time.time() - self.show_lock >= 5:
+            # print('Clean')
+            self.disp.clear()
+            self.disp.display()
+        # else:
+            # print("Can't clean because show recenty")
+
 
 
 # def cls():
