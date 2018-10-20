@@ -59,7 +59,8 @@ class OLED:
         # time.sleep(0.1)
 
     def cls(self):
-        if time.time() - self.show_lock >= 5:
+        if time.time() - self.show_lock >= 3:
+        	# 3 秒后清空显示内容
             # print('Clean')
             self.disp.clear()
             self.disp.display()

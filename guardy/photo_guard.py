@@ -13,7 +13,7 @@ from picamera.array import PiRGBArray
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 sys.path.append(os.path.join(basedir, os.path.pardir))
-from bxin import *
+from bxin import face, send_msg, qiniu_put
 from msg2io import OLED, BUZZER
 
 
@@ -21,13 +21,13 @@ xml = os.path.join(basedir, 'haarcascade_frontalface_default.xml')
 face_cascade = cv2.CascadeClassifier(xml)
 size = (960, 720)
 last_push = [0, 0, 0]
-task = queue.Queue(maxsize=5)
+task = queue.Queue(maxsize=15)
 
 oleder = OLED()
 buzzer = BUZZER()
 
 
-def is_family(buf, safe=75, normal=50):
+def is_family(buf, safe=60, normal=30):
     b64s = str(base64.b64encode(buf), 'utf-8')
     res = face.search(b64s, 'BASE64', 'Famaly', {'quality_control': 'LOW'})
     if 0 == res['error_code']:
@@ -43,7 +43,7 @@ def is_family(buf, safe=75, normal=50):
         # 图片模糊、没有识别到人、网络错误等，都暂不保存图片。
         return 0, res['error_msg']
     else:
-        return 1, res['error_msg']
+        return 0, res['error_msg']
 
 
 def recording(tool_id, msg, buf, stamp):
@@ -64,13 +64,14 @@ def recording(tool_id, msg, buf, stamp):
             f.write(buf)
 
         global last_push
-        if time.time() - last_push[tool_id] >= 60:
+        if time.time() - last_push[tool_id] >= 300:
             # 相同的推送原因，60 秒内只推送一次。推送原因不同时不受限制。
             title = msg[1]
             cont = '\n\n'.join(msg)
             send_msg(title, cont)
+            if time.time() - last_push[tool_id] >= 3600:
+                buzzer.beep(0.1, 1)
             last_push[tool_id] = time.time()
-            buzzer.beep(0.1, 1)
 
     if tool_id >= 2:
         print('%s:Should sent to QINIU, delayed', name)
@@ -83,7 +84,7 @@ def dealing():
         tool_id, info = is_family(buf)
         msg = [time.strftime('%Y%m%d_%X', time.gmtime(stamp + 28800)), info]
         recording(tool_id, msg, buf, stamp)
-        time.sleep(0.3)
+        time.sleep(0.5)
 
 
 def is_face_in(frame):
