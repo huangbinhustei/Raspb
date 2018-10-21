@@ -3,6 +3,7 @@ import requests
 import os
 import time
 import threading
+import glob
 from functools import wraps
 from collections import defaultdict
 
@@ -10,7 +11,6 @@ import RPi.GPIO as GPIO
 
 import Adafruit_GPIO.SPI as SPI
 import Adafruit_SSD1306
-import RPi.GPIO as GPIO
 from PIL import Image
 from PIL import ImageDraw
 from PIL import ImageFont
@@ -166,3 +166,83 @@ class BUZZER:
     def clean(self):
         GPIO.output(self.buzzer_pin, GPIO.HIGH)
         GPIO.cleanup()
+
+
+class LED:
+    def __init__(self):
+        self.led_pin = [23, 27, 22, 5]
+        GPIO.setmode(GPIO.BCM)
+        for i in self.led_pin:
+            try:
+                GPIO.setup(i, GPIO.OUT)
+            except:
+                print(str(i) + 'is using')
+
+    def on(self, i):
+        if i >= 0 and i <= 3:
+            GPIO.output(self.led_pin[i], GPIO.LOW)
+        else:
+            print('Wrong Index')
+    
+    def off(self, i):
+        if i >= 0 and i <= 3:
+            GPIO.output(self.led_pin[i], GPIO.HIGH)
+        else:
+            print('Wrong Index') 
+
+    def blink(self, i, delay=0.5):
+        self.on(i)
+        time.sleep(delay)
+        self.off(i)
+
+    def clean(self):
+        GPIO.cleanup()
+
+    def flow(self, delay=0.25):
+        # 闪一个轮次
+        for i in range(4):
+            l.blink(i, delay)
+
+
+class DS18B20:
+    def __init__(self):
+        os.system('modprobe w1-gpio')
+        os.system('modprobe w1-therm')
+        target_dir = '/sys/bus/w1/devices/'
+        device_folder = glob.glob(target_dir + '28*')[0]
+        self.__device_file = device_folder + '/w1_slave'
+        self.__name_file = device_folder + '/name'
+
+    def __read_rom(self):
+        # 似乎返回端是文件名，但是不知道意义何在
+        with open(self.__name_file, 'r') as f:
+            return f.readline()
+
+    def __read_temp_raw(self):
+        with open(self.__device_file, 'r') as f:
+            return f.readlines()
+
+    def get_temperature(self):
+        lines = self.__read_temp_raw()
+        if not lines[0].strip().endswith('YES'):
+            return False, 'Loading Failed'
+        info = lines[1].split('t=')
+        if len(info) == 1:
+            return False, 'No Results'
+        return True, round(float(info[1]) / 1000, 1)
+
+    def get_side_info(self):
+        return self.__read_rom()
+
+
+if __name__ == '__main__':
+    t = time.time()
+    reader = DS18B20()
+    flag, ret = reader.get_temperature()
+    if flag:
+        print(ret)
+    else:
+        print(ret)
+        print(reader.get_side_info())
+    print(round(time.time() - t, 4) * 1000)
+    

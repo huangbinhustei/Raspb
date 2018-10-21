@@ -132,7 +132,7 @@ class GUARDOR:
                 faces = self.__is_face_in(img)
                 if isinstance(faces, tuple):
                     # 没有发现人脸
-                    print(time.strftime('%Y%m%d_%X', time.gmtime()) + "\tHavn't found sbd")
+                    # print(time.strftime('%Y%m%d_%X', time.gmtime()) + "\tHavn't found sbd")
                     time.sleep(0.5)
                 else:
                     self.__drawing(img, faces)
