@@ -67,14 +67,6 @@ class OLED:
         # else:
             # print("Can't clean because show recenty")
 
-
-
-# def cls():
-#     draw.rectangle((0, 0, width, height), outline=0, fill=0)
-#     disp.image(image)
-#     disp.display()
-
-
 class BUZZER:
     def __init__(self):
         #定义一个存放led引脚号的列表
