@@ -8,6 +8,8 @@ from photo_guard import REPORTER, GUARDOR
 TRANSLATE = ('OFF', 'ON')
 keys_pin = [6, 13, 19, 26]
 keys_name = ['Red', 'Yellow', 'Blue', 'Orange']
+last_press = 0
+time_gap = 0.5
 
 
 def introduce(func):
@@ -15,13 +17,20 @@ def introduce(func):
     def yelling(*args, **kw):
         stamp = time.strftime('%Y%m%d_%X', time.gmtime())
         _key = func.__name__.upper()
+        global last_press
+        global time_gap
         print(stamp + '\t' + _key + ' PRESS')
-        ret = func(*args, **kw)
-        reporter.oleder.show([_key + ' PRESS',
-                              'OLED ' + TRANSLATE[reporter.show_in_oled],
-                              'BUZZER ' + TRANSLATE[reporter.show_in_buzzer],
-                              ])
-        reporter.buzzer.beep(0.1, 1)
+        if time.time() - last_press >= time_gap:
+            ret = func(*args, **kw)
+            reporter.oleder.show([_key + ' PRESS',
+                                'OLED     ' + TRANSLATE[reporter.show_in_oled],
+                                'BUZZER ' + TRANSLATE[reporter.show_in_buzzer],
+                                ])
+            reporter.buzzer.beep(0.01, 0.05)
+            last_press = time.time()
+        else:
+            print('should not reponse')
+            ret = False
         return ret
     return yelling
 
@@ -29,45 +38,59 @@ def introduce(func):
 @introduce
 def red():
     if guardor.run_flag or reporter.run_flag:
-        print("It's already running, I will restart it")
+        # 当前运行中
         reporter.stop()
         guardor.stop()
-        time.sleep(1)
-    reporter.start()
-    guardor.start()
-    print(time.strftime('%Y%m%d_%X', time.gmtime()) + "\tStart")
+        reporter.oleder.cls()
+        print(time.strftime('%Y%m%d_%X', time.gmtime()) + "\tstopped")
+    else:
+        # 当前没有运行
+        reporter.oleder.cls()
+        reporter.start()
+        guardor.start()
+        print(time.strftime('%Y%m%d_%X', time.gmtime()) + "\tstarted")
 
 
 @introduce
 def yellow(): 
     reporter.stop()
-    if reporter.show_in_oled:
-        reporter.show_in_oled = False
-        print(time.strftime('%Y%m%d_%X', time.gmtime()) + '\tNo longer show in oled')
-    else:
+    candation = reporter.show_in_oled * 2 + reporter.show_in_buzzer
+    '''
+    状态    oled    buzzer
+    00:    off     off
+    01:    off     on
+    10:    on      off
+    11:    on      on
+    '''
+    if 0 == candation:
+        # 当前 00，按下之后变成 01 -> 打开蜂鸣器
+        reporter.show_in_buzzer = True
+        print(time.strftime('%Y%m%d_%X', time.gmtime()) + '\toled off & buzzer on')
+    elif 1 == candation:
+        # 当前 01，按下之后变成 10 -> 关闭蜂鸣器， 打开oled
         reporter.show_in_oled = True
-        print(time.strftime('%Y%m%d_%X', time.gmtime()) + '\tReshow in oled')
+        reporter.show_in_buzzer = False
+        print(time.strftime('%Y%m%d_%X', time.gmtime()) + '\toled on & buzzer off')
+    elif 2 == candation:
+        # 当前 10，按下之后变成 11 -> 打开蜂鸣器
+        reporter.show_in_buzzer = True
+        print(time.strftime('%Y%m%d_%X', time.gmtime()) + '\toled on & buzzer on')
+    elif 3 == candation:
+        # 当前 11，按下之后变成 00 -> 关闭蜂鸣器，关闭oled
+        reporter.show_in_oled = False
+        reporter.show_in_buzzer = False
+        print(time.strftime('%Y%m%d_%X', time.gmtime()) + '\toled off & buzzer off')
     reporter.start()
 
 
 @introduce
 def blue():
-    reporter.stop()
-    if reporter.show_in_buzzer:
-        reporter.show_in_buzzer = False
-        print(time.strftime('%Y%m%d_%X', time.gmtime()) + '\tNo longer show in buzzer')
-    else:
-        reporter.show_in_buzzer = True
-        print(time.strftime('%Y%m%d_%X', time.gmtime()) + '\tReshow in Buzzer')
-    reporter.start()
+    pass
 
 
 @introduce
 def orange():
-    reporter.stop()
-    guardor.stop()
-    reporter.oleder.cls()
-    print(time.strftime('%Y%m%d_%X', time.gmtime()) + '\tAll strop')
+    pass
 
 
 def key_interrupt(key):

@@ -35,16 +35,12 @@ class REPORTER:
 
     def _running(self):
         while self.run_flag:
-            idx, buf, stamp = task.get()
-            if 0 == idx:
-                tool_id, info = self.__is_family(buf)
-                msg = [time.strftime('%Y%m%d_%X', time.gmtime(stamp + 28800)), info]
-                self.__recording(tool_id, msg, buf, stamp)
-            # else:
-            #     self.oleder.cls()
+            buf, stamp = task.get()
+            tool_id, info = self.__is_family(buf)
+            msg = [time.strftime('%Y%m%d_%X', time.gmtime(stamp + 28800)), info]
+            self.__recording(tool_id, msg, buf, stamp)
             time.sleep(0.5)
-        else:
-            print('Stop report because self.run==False')
+        print('Reporter stopped')
 
     def __is_family(self, buf, safe=60, normal=30):
         b64s = str(base64.b64encode(buf), 'utf-8')
@@ -72,7 +68,9 @@ class REPORTER:
         """
         print('\t'.join(msg))
         if self.show_in_oled:
-            self.oleder.show(msg)
+            msg_in_oled = msg
+            msg_in_oled[0] = msg[0].split('_')[1]
+            self.oleder.show(msg_in_oled)
         with open(os.path.join(basedir, 'Persons', 'recording.txt'), 'a') as f:
             f.write('\t'.join(msg) + '\n')
 
@@ -134,20 +132,18 @@ class GUARDOR:
                 faces = self.__is_face_in(img)
                 if isinstance(faces, tuple):
                     # 没有发现人脸
-                    # if task.empty:
-                        # task.put([1, '', ''])
                     print(time.strftime('%Y%m%d_%X', time.gmtime()) + "\tHavn't found sbd")
                     time.sleep(0.5)
                 else:
                     self.__drawing(img, faces)
                     _, buf = cv2.imencode('.jpg', img)
                     try:
-                        task.put_nowait([0, buf, time.time()])
+                        task.put_nowait([buf, time.time()])
                     except:
                         pass
-                if False == self.run_flag:
+                if not self.run_flag:
                     break
-        print('guard stopped')
+        print('Guard stopped')
     
     def start(self):
         self.run_flag = True

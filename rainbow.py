@@ -114,8 +114,8 @@ class OLED:
         self.top = padding
         self.bottom = self.disp.height - padding
 
-        self.font = ImageFont.truetype('/usr/share/fonts/truetype/wqy/wqy-microhei.ttc', 16)
-        self.offset = 22
+        self.font = ImageFont.truetype('/usr/share/fonts/truetype/wqy/wqy-microhei.ttc', 14)
+        self.offset = 18
         
     def show(self, msgs, x=0):
         self.draw.rectangle((0, 0, self.disp.width, self.disp.height), outline=0, fill=0)
