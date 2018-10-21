@@ -19,12 +19,9 @@ from rainbow import OLED, BUZZER
 
 xml = os.path.join(basedir, 'haarcascade_frontalface_default.xml')
 face_cascade = cv2.CascadeClassifier(xml)
-# size = (960, 720)
 last_push = [0, 0, 0]
 task = queue.Queue(maxsize=6)
 
-# oleder = OLED()
-# buzzer = BUZZER()
 
 class REPORTER:
     def __init__(self, show_in_oled=True, show_in_buzzer=False):
@@ -43,8 +40,8 @@ class REPORTER:
                 tool_id, info = self.__is_family(buf)
                 msg = [time.strftime('%Y%m%d_%X', time.gmtime(stamp + 28800)), info]
                 self.__recording(tool_id, msg, buf, stamp)
-            else:
-                self.oleder.cls()
+            # else:
+            #     self.oleder.cls()
             time.sleep(0.5)
         else:
             print('Stop report because self.run==False')
@@ -137,10 +134,9 @@ class GUARDOR:
                 faces = self.__is_face_in(img)
                 if isinstance(faces, tuple):
                     # 没有发现人脸
-                    if task.empty:
-                        task.put([1, '', ''])
+                    # if task.empty:
+                        # task.put([1, '', ''])
                     print(time.strftime('%Y%m%d_%X', time.gmtime()) + "\tHavn't found sbd")
-                    
                     time.sleep(0.5)
                 else:
                     self.__drawing(img, faces)
@@ -160,10 +156,3 @@ class GUARDOR:
     
     def stop(self):
         self.run_flag = False
-
-
-if __name__ == '__main__':
-    t1 = threading.Thread(target=dealing)
-    t1.start()
-    print('Start Guard!')
-    taking()

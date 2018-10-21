@@ -123,10 +123,11 @@ class OLED:
             self.draw.text((x, self.top + self.offset * i), msgs[i], font=self.font, fill=255)
 
         # Display image.
+        self.disp.clear()
         self.disp.image(self.image)
         self.disp.display()
         self.show_lock = time.time()
-        # time.sleep(0.1)
+        time.sleep(0.1)
 
     def cls(self):
         if time.time() - self.show_lock >= 3:
