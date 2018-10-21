@@ -14,7 +14,7 @@ from picamera.array import PiRGBArray
 basedir = os.path.abspath(os.path.dirname(__file__))
 sys.path.append(os.path.join(basedir, os.path.pardir))
 from bxin import face, send_msg, qiniu_put
-from msg2io import OLED, BUZZER
+from rainbow import OLED, BUZZER
 
 
 xml = os.path.join(basedir, 'haarcascade_frontalface_default.xml')
