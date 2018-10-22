@@ -1,9 +1,17 @@
 # -- coding: utf-8 --
 import time
+import os
+import sys
 from functools import wraps
 
 import RPi.GPIO as GPIO
+
 from photo_guard import REPORTER, GUARDOR
+basedir = os.path.abspath(os.path.dirname(__file__))
+sys.path.append(os.path.join(basedir, os.path.pardir))
+from bxin import face, send_msg, qiniu_put
+from rainbow import OLED, BUZZER, KEYBOARD
+
 
 TRANSLATE = ('OFF', 'ON')
 keys_pin = [6, 13, 19, 26]
@@ -22,11 +30,6 @@ def introduce(func):
         print(stamp + '\t' + _key + ' PRESS')
         if time.time() - last_press >= time_gap:
             ret = func(*args, **kw)
-            reporter.oleder.show([_key + ' PRESS',
-                                'OLED     ' + TRANSLATE[reporter.show_in_oled],
-                                'BUZZER ' + TRANSLATE[reporter.show_in_buzzer],
-                                ])
-            reporter.buzzer.beep(0.01, 0.05)
             last_press = time.time()
         else:
             print('should not reponse')
@@ -35,84 +38,78 @@ def introduce(func):
     return yelling
 
 
-@introduce
-def red():
-    if guardor.run_flag or reporter.run_flag:
-        # 当前运行中
-        reporter.stop()
-        guardor.stop()
-        reporter.oleder.cls()
-        print(time.strftime('%Y%m%d_%X', time.gmtime()) + "\tstopped")
-    else:
-        # 当前没有运行
-        reporter.oleder.cls()
-        reporter.start()
-        guardor.start()
-        print(time.strftime('%Y%m%d_%X', time.gmtime()) + "\tstarted")
+class Maintance(KEYBOARD):
+    def __init__(self):
+        super(Maintance, self).__init__()
+        self.reporter = REPORTER()
+        self.guardor = GUARDOR()
 
+    @introduce
+    def red(self):
+        self.reporter.buzzer.beep(0.01, 0.05)
 
-@introduce
-def yellow(): 
-    reporter.stop()
-    candation = reporter.show_in_oled * 2 + reporter.show_in_buzzer
-    '''
-    状态    oled    buzzer
-    00:    off     off
-    01:    off     on
-    10:    on      off
-    11:    on      on
-    '''
-    if 0 == candation:
-        # 当前 00，按下之后变成 01 -> 打开蜂鸣器
-        reporter.show_in_buzzer = True
-        print(time.strftime('%Y%m%d_%X', time.gmtime()) + '\toled off & buzzer on')
-    elif 1 == candation:
-        # 当前 01，按下之后变成 10 -> 关闭蜂鸣器， 打开oled
-        reporter.show_in_oled = True
-        reporter.show_in_buzzer = False
-        print(time.strftime('%Y%m%d_%X', time.gmtime()) + '\toled on & buzzer off')
-    elif 2 == candation:
-        # 当前 10，按下之后变成 11 -> 打开蜂鸣器
-        reporter.show_in_buzzer = True
-        print(time.strftime('%Y%m%d_%X', time.gmtime()) + '\toled on & buzzer on')
-    elif 3 == candation:
-        # 当前 11，按下之后变成 00 -> 关闭蜂鸣器，关闭oled
-        reporter.show_in_oled = False
-        reporter.show_in_buzzer = False
-        print(time.strftime('%Y%m%d_%X', time.gmtime()) + '\toled off & buzzer off')
-    reporter.start()
+        if self.guardor.run_flag or self.reporter.run_flag:
+            # self.reporter.oleder.show(['Red Press', 'Task stopping'])
+            # 当前运行中
+            self.reporter.oleder.cls(level=5)
+            self.reporter.stop()
+            self.guardor.stop()
+            print(time.strftime('%Y%m%d_%X', time.gmtime()) + "\tstopped")
+            self.reporter.oleder.show(['Red Press', 'Task stopped'], level=2)
+        else:
+            # self.reporter.oleder.show(['Red Press', 'Task starting'])
+            # 当前没有运行
+            self.reporter.oleder.cls()
+            self.reporter.start()
+            self.guardor.start()
+            print(time.strftime('%Y%m%d_%X', time.gmtime()) + "\tstarted")
+            self.reporter.oleder.show(['Red Press', 'Task started'], level=2)
 
+    @introduce
+    def yellow(self):
+        self.reporter.stop()
+        candation = self.reporter.show_in_oled * 2 + self.reporter.show_in_buzzer
+        '''
+        状态    oled    buzzer
+        00:    off     off
+        01:    off     on
+        10:    on      off
+        11:    on      on
+        '''
+        if 0 == candation:
+            # 当前 00，按下之后变成 01 -> 打开蜂鸣器
+            self.reporter.show_in_buzzer = True
+            print(time.strftime('%Y%m%d_%X', time.gmtime()) + '\toled off & buzzer on')
+        elif 1 == candation:
+            # 当前 01，按下之后变成 10 -> 关闭蜂鸣器， 打开oled
+            self.reporter.show_in_oled = True
+            self.reporter.show_in_buzzer = False
+            print(time.strftime('%Y%m%d_%X', time.gmtime()) + '\toled on & buzzer off')
+        elif 2 == candation:
+            # 当前 10，按下之后变成 11 -> 打开蜂鸣器
+            self.reporter.show_in_buzzer = True
+            print(time.strftime('%Y%m%d_%X', time.gmtime()) + '\toled on & buzzer on')
+        elif 3 == candation:
+            # 当前 11，按下之后变成 00 -> 关闭蜂鸣器，关闭oled
+            self.reporter.show_in_oled = False
+            self.reporter.show_in_buzzer = False
+            print(time.strftime('%Y%m%d_%X', time.gmtime()) + '\toled off & buzzer off')
+        self.reporter.oleder.show(['Yellow Press',
+            'OLED:     ' + TRANSLATE[self.reporter.show_in_oled],
+            'BUZZER: ' + TRANSLATE[self.reporter.show_in_buzzer]], level=2)
+        self.reporter.buzzer.beep(0.01, 0.05)
+        self.reporter.start()
 
-@introduce
-def blue():
-    pass
+    def patrol(self):
+        self.reporter.oleder.cls()
 
+    def before_start(self):
+        self.reporter.oleder.show(['Keyboard', 'is', 'ready'], level=1)
 
-@introduce
-def orange():
-    pass
-
-
-def key_interrupt(key):
-    target = keys_name[keys_pin.index(key)]
-    {
-        'Red': red,
-        'Yellow': yellow,
-        'Blue': blue,
-        'Orange': orange,
-    }[target]()
+    def stop(self):
+        super(Maintance, self).stop()
 
 if __name__ == '__main__':
-    GPIO.setmode(GPIO.BCM)
-
-    for i in keys_pin:
-        GPIO.setup(i, GPIO.IN, GPIO.PUD_UP)
-        GPIO.add_event_detect(i, GPIO.FALLING, key_interrupt, 200)
-
-    reporter = REPORTER()
-    guardor = GUARDOR()
-    print("I'm ready and listening!")
-
-    while True:
-        reporter.oleder.cls()
-        time.sleep(1)
+    keyboard = Maintance()
+    keyboard.run_flag = True
+    keyboard.start()

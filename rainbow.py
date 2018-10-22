@@ -16,17 +16,6 @@ from PIL import ImageDraw
 from PIL import ImageFont
 
 
-def introduce(func):
-    @wraps(func)
-    def yelling(*args, **kw):
-        stamp = time.strftime('%Y%m%d_%X', time.gmtime())
-        _key = func.__name__
-        print(stamp + '\t' + _key + 'PRESS')
-        ret = func(*args, **kw)
-        return ret
-    return yelling
-
-
 class KEYBOARD:
     """
     仅用于彩虹板的控制
@@ -37,21 +26,16 @@ class KEYBOARD:
         self.register()
         self.run_flag = False
         GPIO.setmode(GPIO.BCM)
-        
 
-    @introduce
     def red(self):
         pass
 
-    @introduce
     def yellow(self):
         pass
 
-    @introduce
     def blue(self):
         pass
 
-    @introduce
     def orange(self):
         pass
 
@@ -67,16 +51,24 @@ class KEYBOARD:
         target = self.keys_pin.index(key)
         self.handle[target]()
 
+    def patrol(self):
+        pass
+
     def _running(self):
         for i in self.keys_pin:
             GPIO.setup(i, GPIO.IN, GPIO.PUD_UP)
             GPIO.add_event_detect(i, GPIO.FALLING, self.key_interrupt, 200)
         print('Keyboard is ready')
         while self.run_flag:
+            self.patrol()
             time.sleep(1)
         print('Keyboard is out of ready')
 
+    def before_start(self):
+        pass
+
     def start(self):
+        self.before_start()
         self.run_flag = True
         t1 = threading.Thread(target=self._running)
         t1.start()
@@ -95,12 +87,12 @@ class OLED:
         # 128x64 display with hardware SPI:
         self.disp = Adafruit_SSD1306.SSD1306_128_64(rst=RST, dc=DC, spi=SPI.SpiDev(SPI_PORT, SPI_DEVICE, max_speed_hz=8000000))
 
-        # Initialize library
+        self.show_lock = [0, 0, 0, 0] # 四个优先级的展示顺序
+
+        # Initialize library.
         self.disp.begin()
-        # Clear display.
-        self.show_lock = 0
         self.cls()
-                
+
         self.image = Image.new('1', (self.disp.width, self.disp.height))
         # Get drawing object to draw on image.
         self.draw = ImageDraw.Draw(self.image)
@@ -117,7 +109,11 @@ class OLED:
         self.font = ImageFont.truetype('/usr/share/fonts/truetype/wqy/wqy-microhei.ttc', 14)
         self.offset = 18
         
-    def show(self, msgs, x=0):
+    def show(self, msgs, x=0, level=0):
+        if level < 3 and time.time() - max(self.show_lock[level + 1:]) <= 3:
+            print('有优先级更高的内容显示中，暂不显示')
+            return
+        
         self.draw.rectangle((0, 0, self.disp.width, self.disp.height), outline=0, fill=0)
         for i in range(len(msgs)):
             self.draw.text((x, self.top + self.offset * i), msgs[i], font=self.font, fill=255)
@@ -126,13 +122,12 @@ class OLED:
         self.disp.clear()
         self.disp.image(self.image)
         self.disp.display()
-        self.show_lock = time.time()
+        self.show_lock[level] = time.time()
         time.sleep(0.1)
 
-    def cls(self):
-        if time.time() - self.show_lock >= 3:
+    def cls(self, level=0):
+        if level > 3 or time.time() - max(self.show_lock[level:]) >= 3:
         	# 3 秒后清空显示内容
-            # print('Clean')
             self.disp.clear()
             self.disp.display()
         # else:
