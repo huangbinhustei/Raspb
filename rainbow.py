@@ -76,7 +76,6 @@ class KEYBOARD:
     def stop(self):
         self.run_flag = False
 
-
 class OLED:
     def __init__(self):
         RST = 25  # Raspberry Pi pin configuration:
@@ -143,6 +142,7 @@ class BUZZER:
         #循环遍历存放引脚的数组
         GPIO.setup(self.buzzer_pin, GPIO.OUT)
         #定义蜂鸣器开启函数
+        self.running = False
 
     def __on(self):
         #定义蜂鸣器开启函数
@@ -152,11 +152,18 @@ class BUZZER:
         #定义报警鸣叫函数beep(gap_time,on_time),on_time为鸣叫时长，gap_time为鸣叫间隔 单位为秒
         GPIO.output(self.buzzer_pin, GPIO.HIGH)
 
-    def beep(self, on_time, gap_time):
+    def __beep(self, on_time, gap_time):
+        self.running = True
         self.__off()
         time.sleep(on_time)
         self.__on()
         time.sleep(gap_time)
+        self.running = False
+
+    def beep(self, on_time, gap_time):
+        if not self.running:
+            t1 = threading.Thread(target=self.__beep, args=(on_time, gap_time))
+            t1.start()
 
     def clean(self):
         GPIO.output(self.buzzer_pin, GPIO.HIGH)
@@ -172,6 +179,8 @@ class LED:
                 GPIO.setup(i, GPIO.OUT)
             except:
                 print(str(i) + 'is using')
+        for i in self.led_pin:
+            GPIO.output(i, GPIO.HIGH)
 
     def on(self, i):
         if i >= 0 and i <= 3:
@@ -183,7 +192,7 @@ class LED:
         if i >= 0 and i <= 3:
             GPIO.output(self.led_pin[i], GPIO.HIGH)
         else:
-            print('Wrong Index') 
+            print('Wrong Index')
 
     def blink(self, i, delay=0.5):
         self.on(i)
@@ -196,7 +205,7 @@ class LED:
     def flow(self, delay=0.25):
         # 闪一个轮次
         for i in range(4):
-            l.blink(i, delay)
+            self.blink(i, delay)
 
 
 class DS18B20:

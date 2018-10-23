@@ -10,14 +10,14 @@ from photo_guard import REPORTER, GUARDOR
 basedir = os.path.abspath(os.path.dirname(__file__))
 sys.path.append(os.path.join(basedir, os.path.pardir))
 from bxin import face, send_msg, qiniu_put
-from rainbow import OLED, BUZZER, KEYBOARD
+from rainbow import OLED, BUZZER, KEYBOARD, DS18B20, LED
 
 
 TRANSLATE = ('OFF', 'ON')
 keys_pin = [6, 13, 19, 26]
 keys_name = ['Red', 'Yellow', 'Blue', 'Orange']
 last_press = 0
-time_gap = 0.5
+time_gap = 0.1
 
 
 def introduce(func):
@@ -43,11 +43,12 @@ class Maintance(KEYBOARD):
         super(Maintance, self).__init__()
         self.reporter = REPORTER()
         self.guardor = GUARDOR()
+        self.thermometer = DS18B20()
+        self.led = LED()
 
     @introduce
     def red(self):
-        self.reporter.buzzer.beep(0.01, 0.05)
-
+        self.reporter.buzzer.beep(0.04, 0.05)
         if self.guardor.run_flag or self.reporter.run_flag:
             # self.reporter.oleder.show(['Red Press', 'Task stopping'])
             # 当前运行中
@@ -97,8 +98,23 @@ class Maintance(KEYBOARD):
         self.reporter.oleder.show(['Yellow Press',
             'OLED:     ' + TRANSLATE[self.reporter.show_in_oled],
             'BUZZER: ' + TRANSLATE[self.reporter.show_in_buzzer]], level=2)
-        self.reporter.buzzer.beep(0.01, 0.05)
+        self.reporter.buzzer.beep(0.02, 0.1)
         self.reporter.start()
+
+    @introduce
+    def blue(self):
+        self.reporter.buzzer.beep(0.02, 0.1)
+        flag, ret = self.thermometer.get_temperature()
+        if ret:
+            self.reporter.oleder.show(['Blue Press', time.strftime('%X'), str(ret) + ' 度'])
+        else:
+            print('Failed to get temperature')
+
+    @introduce
+    def orange(self):
+        self.reporter.buzzer.beep(0.02, 0.1)
+        self.reporter.oleder.show(['Orange Press', time.strftime('%X')])
+        self.led.flow()
 
     def patrol(self):
         self.reporter.oleder.cls()

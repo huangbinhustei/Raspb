@@ -39,7 +39,6 @@ class REPORTER:
             tool_id, info = self.__is_family(buf)
             msg = [time.strftime('%Y%m%d_%X', time.gmtime(stamp + 28800)), info]
             self.__recording(tool_id, msg, buf, stamp)
-            time.sleep(0.5)
         print('Reporter stopped')
 
     def __is_family(self, buf, safe=60, normal=30):
@@ -133,7 +132,8 @@ class GUARDOR:
                 if isinstance(faces, tuple):
                     # 没有发现人脸
                     # print(time.strftime('%Y%m%d_%X', time.gmtime()) + "\tHavn't found sbd")
-                    time.sleep(0.5)
+                    # time.sleep(1)
+                    pass
                 else:
                     self.__drawing(img, faces)
                     _, buf = cv2.imencode('.jpg', img)
