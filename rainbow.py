@@ -77,6 +77,7 @@ class KEYBOARD:
     def stop(self):
         self.run_flag = False
 
+
 class OLED:
     def __init__(self):
         RST = 25  # Raspberry Pi pin configuration:
@@ -215,10 +216,15 @@ class LED:
     def clean(self):
         GPIO.cleanup()
 
-    def flow(self, delay=0.25):
-        # 闪一个轮次
-        for i in range(4):
-            self.blink(i, delay)
+    def __flow(self, delay, loop):
+        # 闪 loop 个轮次
+        for j in range(loop):
+            for i in range(4):
+                self.blink(i, delay)
+
+    def flow(self, delay=0.25, loop=1):
+        t1 = threading.Thread(target=self.__flow, args=(delay, loop))
+        t1.start()
 
 
 class DS18B20:
