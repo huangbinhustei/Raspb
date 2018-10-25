@@ -5,7 +5,7 @@ import time
 import threading
 import glob
 from functools import wraps
-from collections import defaultdict
+from collections import defaultdict, deque
 import asyncio
 
 import RPi.GPIO as GPIO
@@ -80,6 +80,7 @@ class KEYBOARD:
 
 class OLED:
     def __init__(self):
+        self.scroll_task = deque(maxlen=3)
         RST = 25  # Raspberry Pi pin configuration:
         DC = 24     # Note the following are only used with SPI
         SPI_PORT = 0    # Note the following are only used with SPI
@@ -88,7 +89,8 @@ class OLED:
         # 128x64 display with hardware SPI:
         self.disp = Adafruit_SSD1306.SSD1306_128_64(rst=RST, dc=DC, spi=SPI.SpiDev(SPI_PORT, SPI_DEVICE, max_speed_hz=8000000))
 
-        self.show_lock = [0, 0, 0, 0] # 四个优先级的展示顺序
+        self.show_lock = [0, 0] # scroll & alart 个优先级的展示顺序
+        self.alart_lock = 0 # scroll 不需要 lock，alart 需要。
 
         # Initialize library.
         self.disp.begin()
@@ -109,7 +111,40 @@ class OLED:
 
         self.font = ImageFont.truetype('/usr/share/fonts/truetype/wqy/wqy-microhei.ttc', 14)
         self.offset = 18
+
+    def scroll(self, line, x=0):
+        # 优先级最低的展示方式，每次只能一行
+        if time.time() - self.alart_lock <= 3:
+            print('有优先级更高的内容显示中，暂不显示')
+            return
         
+        self.draw.rectangle((0, 0, self.disp.width, self.disp.height), outline=0, fill=0)
+        self.scroll_task.append(line)
+        for i in self.scroll_task:
+            self.draw.text((x, self.top + self.offset * i), i, font=self.font, fill=255)
+
+        # Display image.
+        self.disp.clear()
+        self.disp.image(self.image)
+        self.disp.display()
+        time.sleep(0.1)
+
+    def alert(self, msgs, x=0):
+        if time.time() - self.alart_lock <= 3:
+            print('有优先级更高的内容显示中，暂不显示')
+            return
+        
+        self.draw.rectangle((0, 0, self.disp.width, self.disp.height), outline=0, fill=0)
+        for i in range(len(msgs)):
+            self.draw.text((x, self.top + self.offset * i), msgs[i], font=self.font, fill=255)
+
+        # Display image.
+        self.disp.clear()
+        self.disp.image(self.image)
+        self.disp.display()
+        self.alart_lock = time.time()
+        time.sleep(0.1)
+
     def show(self, msgs, x=0, level=0):
         if level < 3 and time.time() - max(self.show_lock[level + 1:]) <= 3:
             print('有优先级更高的内容显示中，暂不显示')

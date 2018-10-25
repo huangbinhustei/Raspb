@@ -56,7 +56,7 @@ class Maintance(KEYBOARD):
             self.reporter.stop()
             self.guardor.stop()
             print(time.strftime('%Y%m%d_%X', time.gmtime()) + "\tstopped")
-            self.reporter.oleder.show(['Red Press', 'Task stopped'], level=2)
+            self.reporter.oleder.alert(['Red Press', 'Task stopped'], level=2)
         else:
             # self.reporter.oleder.show(['Red Press', 'Task starting'])
             # 当前没有运行
@@ -64,7 +64,7 @@ class Maintance(KEYBOARD):
             self.reporter.start()
             self.guardor.start()
             print(time.strftime('%Y%m%d_%X', time.gmtime()) + "\tstarted")
-            self.reporter.oleder.show(['Red Press', 'Task started'], level=2)
+            self.reporter.oleder.alert(['Red Press', 'Task started'], level=2)
 
     @introduce
     def yellow(self):
@@ -95,7 +95,7 @@ class Maintance(KEYBOARD):
             self.reporter.show_in_oled = False
             self.reporter.show_in_buzzer = False
             print(time.strftime('%Y%m%d_%X', time.gmtime()) + '\toled off & buzzer off')
-        self.reporter.oleder.show(['Yellow Press',
+        self.reporter.oleder.alert(['Yellow Press',
             'OLED:     ' + TRANSLATE[self.reporter.show_in_oled],
             'BUZZER: ' + TRANSLATE[self.reporter.show_in_buzzer]], level=2)
         self.reporter.buzzer.beep(0.02, 0.1)
@@ -106,14 +106,14 @@ class Maintance(KEYBOARD):
         self.reporter.buzzer.beep(0.02, 0.1)
         flag, ret = self.thermometer.get_temperature()
         if ret:
-            self.reporter.oleder.show(['Blue Press', time.strftime('%X'), str(ret) + ' 度'])
+            self.reporter.oleder.alert(['Blue Press', time.strftime('%X'), str(ret) + ' 度'])
         else:
             print('Failed to get temperature')
 
     @introduce
     def orange(self):
         self.reporter.buzzer.beep(0.02, 0.1)
-        self.reporter.oleder.show(['Orange Press', time.strftime('%X')])
+        self.reporter.oleder.alert(['Orange Press', time.strftime('%X')])
         self.led.flow()
 
     def patrol(self):

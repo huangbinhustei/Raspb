@@ -69,7 +69,7 @@ class REPORTER:
         if self.show_in_oled:
             msg_in_oled = msg
             msg_in_oled[0] = msg[0].split('_')[1]
-            self.oleder.show(msg_in_oled)
+            self.oleder.scroll(' '.join(msg_in_oled))
         with open(os.path.join(basedir, 'Persons', 'recording.txt'), 'a') as f:
             f.write('\t'.join(msg) + '\n')
 
