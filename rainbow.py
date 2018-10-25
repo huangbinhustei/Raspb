@@ -6,6 +6,7 @@ import threading
 import glob
 from functools import wraps
 from collections import defaultdict
+import asyncio
 
 import RPi.GPIO as GPIO
 
@@ -164,6 +165,18 @@ class BUZZER:
         if not self.running:
             t1 = threading.Thread(target=self.__beep, args=(on_time, gap_time))
             t1.start()
+
+    def async __new_beep(self, on_time, gap_time):
+        self.running = True
+        self.__off()
+        await asyncio.sleep(on_time)
+        self.__on()
+        await asyncio.sleep(gap_time)
+        self.running = False
+
+    def new_beep(self, on_time, gap_time):
+        if not self.running:
+            async.get_event_loop().run_until_complete(__new_beep())
 
     def clean(self):
         GPIO.output(self.buzzer_pin, GPIO.HIGH)
