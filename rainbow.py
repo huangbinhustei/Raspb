@@ -166,7 +166,7 @@ class BUZZER:
             t1 = threading.Thread(target=self.__beep, args=(on_time, gap_time))
             t1.start()
 
-    def async __new_beep(self, on_time, gap_time):
+    async def __new_beep(self, on_time, gap_time):
         self.running = True
         self.__off()
         await asyncio.sleep(on_time)
