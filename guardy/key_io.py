@@ -14,29 +14,6 @@ from rainbow import OLED, BUZZER, KEYBOARD, DS18B20, LED
 
 
 TRANSLATE = ('OFF', 'ON')
-keys_pin = [6, 13, 19, 26]
-keys_name = ['Red', 'Yellow', 'Blue', 'Orange']
-last_press = 0
-time_gap = 0.1
-
-
-def introduce(func):
-    @wraps(func)
-    def yelling(*args, **kw):
-        stamp = time.strftime('%Y%m%d_%X', time.gmtime())
-        _key = func.__name__.upper()
-        global last_press
-        global time_gap
-        print(stamp + '\t' + _key + ' PRESS')
-        ret = func(*args, **kw)
-        # if time.time() - last_press >= time_gap:
-        #     ret = func(*args, **kw)
-        #     last_press = time.time()
-        # else:
-        #     print('should not reponse')
-        #     ret = False
-        return ret
-    return yelling
 
 
 class Maintance(KEYBOARD):
@@ -47,29 +24,35 @@ class Maintance(KEYBOARD):
         self.thermometer = DS18B20()
         self.led = LED()
 
-    @introduce
-    def red(self):
-        self.reporter.buzzer.beep(0.04, 0.05)
+    def when_press(self, key):
+        self.reporter.beep(0.01, 0.02)
+        stamp = time.strftime('%Y%m%d_%X', time.gmtime())
+        print(stamp + '\t' + self.keys_name[self.keys_pin.index(key)] + ' PRESS')
+        offset = self.keys_pin.index(key)
+        if offset != 3:
+            # 第三个按键本来就是 blink 了。
+            self.led.blink(offset, delay=1)
+        
+    def when_pressed(self, key):
+        pass
+
+    def red(self, key):
         if self.guardor.run_flag or self.reporter.run_flag:
-            # self.reporter.oleder.show(['Red Press', 'Task stopping'])
             # 当前运行中
-            self.reporter.oleder.cls()
+            self.reporter.cls()
             self.reporter.stop()
             self.guardor.stop()
             print(time.strftime('%Y%m%d_%X', time.gmtime()) + "\tstopped")
-            self.reporter.oleder.alert(['Red Press', 'Task stopped'])
+            self.reporter.alert(['Red Press', 'Task stopped'])
         else:
-            # self.reporter.oleder.show(['Red Press', 'Task starting'])
             # 当前没有运行
-            self.reporter.oleder.cls()
+            self.reporter.cls()
             self.reporter.start()
             self.guardor.start()
             print(time.strftime('%Y%m%d_%X', time.gmtime()) + "\tstarted")
-            self.reporter.oleder.alert(['Red Press', 'Task started'])
+            self.reporter.alert(['Red Press', 'Task started'])
 
-    @introduce
-    def yellow(self):
-        self.reporter.stop()
+    def yellow(self, key):
         candation = self.reporter.show_in_oled * 2 + self.reporter.show_in_buzzer
         '''
         状态    oled    buzzer
@@ -96,32 +79,25 @@ class Maintance(KEYBOARD):
             self.reporter.show_in_oled = False
             self.reporter.show_in_buzzer = False
             print(time.strftime('%Y%m%d_%X', time.gmtime()) + '\toled off & buzzer off')
-        self.reporter.oleder.alert(['Yellow Press',
+        self.reporter.alert(['Yellow Press',
             'OLED:     ' + TRANSLATE[self.reporter.show_in_oled],
             'BUZZER: ' + TRANSLATE[self.reporter.show_in_buzzer]])
-        self.reporter.buzzer.beep(0.02, 0.1)
         self.reporter.start()
 
-    @introduce
-    def blue(self):
-        self.reporter.buzzer.beep(0.02, 0.1)
+    def blue(self, key):
         flag, ret = self.thermometer.get_temperature()
-        if ret:
+        if flag:
             print(str(ret) + ' 度')
-            self.reporter.oleder.alert(['Blue Press', time.strftime('%X'), str(ret) + ' 度'])
+            self.reporter.alert(['Blue Press', time.strftime('%X'), str(ret) + ' 度'])
         else:
             print('Failed to get temperature')
 
-    @introduce
-    def orange(self):
-        self.reporter.buzzer.beep(0.02, 0.1)
-        self.reporter.oleder.alert(['Orange Press', time.strftime('%X')])
-
+    def orange(self, key):
+        self.reporter.alert(['Orange Press', time.strftime('%X')])
         self.led.flow()
 
-
     def before_start(self):
-        self.reporter.oleder.show(['Keyboard', 'is', 'ready'], level=1)
+        self.reporter.alert(['Keyboard', 'is', 'ready'], life_time=5)
 
     def stop(self):
         super(Maintance, self).stop()

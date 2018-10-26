@@ -23,10 +23,10 @@ last_push = [0, 0, 0]
 task = queue.Queue(maxsize=6)
 
 
-class REPORTER:
+class REPORTER(OLED, BUZZER):
     def __init__(self, show_in_oled=True, show_in_buzzer=False):
-        self.oleder = OLED()
-        self.buzzer = BUZZER()
+        OLED.__init__(self)
+        BUZZER.__init__(self)
         self.run_flag = False
         self.show_in_oled = show_in_oled
         self.show_in_buzzer = show_in_buzzer
@@ -48,11 +48,11 @@ class REPORTER:
             tmp = res['result']['user_list'][0]
             ret = tmp['score']
             if ret >= self.door[0]:
-                return 0, tmp['user_id'] + ' : ' + str(round(ret, 1))
+                return 0, tmp['user_id'] + ': ' + str(int(ret))
             elif ret >= self.door[1]:
-                return 1, tmp['user_id'] + ' : ' + str(round(ret, 1))
+                return 1, tmp['user_id'] + ': ' + str(int(ret))
             else:
-                return 2, tmp['user_id'] + ' : ' + str(round(ret, 1))
+                return 2, tmp['user_id'] + ': ' + str(int(ret))
         elif res['error_code'] in (223114, 222202, 222203, 222205, 222206):
             # 图片模糊、没有识别到人、网络错误等，都暂不保存图片。
             return 0, res['error_msg']
@@ -69,7 +69,8 @@ class REPORTER:
         if self.show_in_oled:
             msg_in_oled = msg
             msg_in_oled[0] = msg[0].split('_')[1]
-            self.oleder.scroll(' '.join(msg_in_oled))
+            # msg_in_oled[0] = msg[0].split('_')[1].replace(':', '')
+            self.scroll(' '.join(msg_in_oled))
         with open(os.path.join(basedir, 'Persons', 'recording.txt'), 'a') as f:
             f.write('\t'.join(msg) + '\n')
 
@@ -84,7 +85,7 @@ class REPORTER:
                 # 相同的推送原因，60 秒内只推送一次。推送原因不同时不受限制。
                 send_msg(msg[1], '\n\n'.join(msg))
                 if self.show_in_buzzer and time.time() - last_push[tool_id] >= 3600:
-                    self.buzzer.beep(0.1, 1)
+                    self.beep(0.1, 1)
                 self.last_push[tool_id] = time.time()
 
         if tool_id >= 2:
@@ -131,7 +132,7 @@ class GUARDOR:
                 faces = self.__is_face_in(img)
                 if isinstance(faces, tuple):
                     # 没有发现人脸
-                    print(time.strftime('%Y%m%d_%X', time.gmtime()) + "\tHavn't found sbd")
+                    # print(time.strftime('%Y%m%d_%X', time.gmtime()) + "\tHavn't found sbd")
                     # time.sleep(1)
                     pass
                 else:

@@ -22,34 +22,61 @@ class KEYBOARD:
     仅用于彩虹板的控制
     """
     def __init__(self):
-        self.keys_pin = [6, 13, 19, 26] # ['Red', 'Yellow', 'Blue', 'Orange']
+        self.keys_pin = [6, 13, 19, 26]
+        self.keys_name = ['Red', 'Yellow', 'Blue', 'Orange'] 
         self.handle = {}
         self.register()
         self.run_flag = False
         GPIO.setmode(GPIO.BCM)
 
-    def red(self):
+    def when_press(self, key):
         pass
 
-    def yellow(self):
+    def when_pressed(self, key):
         pass
 
-    def blue(self):
+    def red(self, key):
         pass
 
-    def orange(self):
+    def yellow(self, key):
         pass
+
+    def blue(self, key):
+        pass
+
+    def orange(self, key):
+        pass
+
+    def __red(self, key):
+        self.when_press(key)
+        self.red(key)
+        self.when_pressed(key)
+
+    def __yellow(self, key):
+        self.when_press(key)
+        self.yellow(key)
+        self.when_pressed(key)
+
+    def __blue(self, key):
+        self.when_press(key)
+        self.blue(key)
+        self.when_pressed(key)
+
+    def __orange(self, key):
+        self.when_press(key)
+        self.orange(key)
+        self.when_pressed(key)
 
     def register(self):
         self.handle = {
-                    6: self.red,
-                    13: self.yellow,
-                    19: self.blue,
-                    26: self.orange,
+                    6: self.__red,
+                    13: self.__yellow,
+                    19: self.__blue,
+                    26: self.__orange,
                 }
 
     def key_interrupt(self, key):
-        self.handle[key]()
+        self.handle[key](key)
 
     def patrol(self):
         pass
@@ -60,7 +87,7 @@ class KEYBOARD:
             GPIO.add_event_detect(i, GPIO.FALLING, self.key_interrupt, 200)
         print('Keyboard is ready')
         while self.run_flag:
-            # self.patrol()
+            self.patrol()
             time.sleep(1)
         print('Keyboard is out of ready')
 
@@ -88,7 +115,6 @@ class OLED:
         # 128x64 display with hardware SPI:
         self.disp = Adafruit_SSD1306.SSD1306_128_64(rst=RST, dc=DC, spi=SPI.SpiDev(SPI_PORT, SPI_DEVICE, max_speed_hz=8000000))
 
-        self.show_lock = [0, 0] # scroll & alart 个优先级的展示顺序
         self.alart_lock = 0 # scroll 不需要 lock，alart 需要。
 
         # Initialize library.
@@ -108,12 +134,12 @@ class OLED:
         self.top = padding
         self.bottom = self.disp.height - padding
 
-        self.font = ImageFont.truetype('/usr/share/fonts/truetype/wqy/wqy-microhei.ttc', 14)
-        self.offset = 18
+        self.font = ImageFont.truetype('/usr/share/fonts/truetype/wqy/wqy-microhei.ttc', 16)
+        self.offset = 21
 
     def scroll(self, line, x=0):
         # 优先级最低的展示方式，每次只能一行
-        if time.time() - self.alart_lock <= 3:
+        if time.time() - self.alart_lock <= 2:
             print('有优先级更高的内容显示中，暂不显示')
             return
         
@@ -139,29 +165,14 @@ class OLED:
         self.disp.display()
 
         self.alart_lock = time.time()
-        time.sleep(life_time)
-        if time.time() - self.alart_lock > life_time - 0.1:
-            self.cls()
+        if 0 != life_time:
+            time.sleep(life_time)
+            if time.time() - self.alart_lock > life_time - 0.1:
+                self.cls()
 
     def alert(self, msgs, life_time=2, x=0):
         t_alert = threading.Thread(target=self.__alert, args=(msgs, life_time, x))
         t_alert.start()
-
-    def show(self, msgs, x=0, level=0):
-        if level < 1 and time.time() - max(self.show_lock[level + 1:]) <= 3:
-            print('有优先级更高的内容显示中，暂不显示')
-            return
-        
-        self.draw.rectangle((0, 0, self.disp.width, self.disp.height), outline=0, fill=0)
-        for i in range(len(msgs)):
-            self.draw.text((x, self.top + self.offset * i), msgs[i], font=self.font, fill=255)
-
-        # Display image.
-        self.disp.clear()
-        self.disp.image(self.image)
-        self.disp.display()
-        self.show_lock[level] = time.time()
-        time.sleep(0.1)
 
     def cls(self):
         self.disp.clear()
@@ -200,18 +211,6 @@ class BUZZER:
             t1 = threading.Thread(target=self.__beep, args=(on_time, gap_time))
             t1.start()
 
-    async def __new_beep(self, on_time, gap_time):
-        self.running = True
-        self.__off()
-        await asyncio.sleep(on_time)
-        self.__on()
-        await asyncio.sleep(gap_time)
-        self.running = False
-
-    def new_beep(self, on_time, gap_time):
-        if not self.running:
-            async.get_event_loop().run_until_complete(__new_beep())
-
     def clean(self):
         GPIO.output(self.buzzer_pin, GPIO.HIGH)
         GPIO.cleanup()
@@ -241,10 +240,14 @@ class LED:
         else:
             print('Wrong Index')
 
-    def blink(self, i, delay=0.5):
+    def __blink(self, i, delay=0.5):
         self.on(i)
         time.sleep(delay)
         self.off(i)
+
+    def blink(self, i, delay=0.5):
+        t1 = threading.Thread(target=self.__blink, args=(i, delay))
+        t1.start()
 
     def clean(self):
         GPIO.cleanup()
@@ -253,7 +256,7 @@ class LED:
         # 闪 loop 个轮次
         for j in range(loop):
             for i in range(4):
-                self.blink(i, delay)
+                self.__blink(i, delay)
 
     def flow(self, delay=0.25, loop=1):
         t1 = threading.Thread(target=self.__flow, args=(delay, loop))
@@ -289,62 +292,3 @@ class DS18B20:
 
     def get_side_info(self):
         return self.__read_rom()
-
-
-class RGB:
-    def __init__(self):
-        self.R = 20
-        self.G = 16
-        self.B = 21
-        GPIO.setmode(GPIO.BCM)
-        GPIO.setup(self.R, GPIO.OUT)
-        GPIO.output(self.R, GPIO.HIGH)
-        GPIO.setup(self.G, GPIO.OUT)
-        GPIO.output(self.G, GPIO.HIGH)
-        GPIO.setup(self.B, GPIO.OUT)
-        GPIO.output(self.B, GPIO.HIGH)
-
-        self.pwmR = GPIO.PWM(self.R, 500)
-        self.pwmG = GPIO.PWM(self.G, 500)
-        self.pwmB = GPIO.PWM(self.B, 500)
-
-        self.pwmR.start(100)
-        self.pwmG.start(100)
-        self.pwmB.start(100)
-    
-    def color(self, r, g, b, t=5):
-        print(str(r) + str(g) + str(b))
-        self.pwmR.ChangeDutyCycle(int(r/2.55))
-        self.pwmG.ChangeDutyCycle(int(g/2.55))
-        self.pwmB.ChangeDutyCycle(int(b/2.55))
-        time.sleep(t)
-
-    def run(self):
-        t = 0.5
-        self.color(0, 255, 255, t)
-        self.color(0, 0, 0, t)
-        self.color(0, 0, 255, t)
-        # self.color(255, 255, 0, t)
-        # self.color(0, 255, 255, t)
-        # self.color(255, 0, 255, t)
-        # self.color(255, 255, 255, t)
-        self.pwmR.stop()
-        self.pwmG.stop()
-        self.pwmB.stop()
-        GPIO.cleanup()
-
-
-if __name__ == '__main__':
-    # t = time.time()
-    # reader = DS18B20()
-    # flag, ret = reader.get_temperature()
-    # if flag:
-    #     print(ret)
-    # else:
-    #     print(ret)
-    #     print(reader.get_side_info())
-    # print(round(time.time() - t, 4) * 1000)
-
-    rgb = RGB()
-    rgb.run()
-    
