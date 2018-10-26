@@ -28,12 +28,13 @@ def introduce(func):
         global last_press
         global time_gap
         print(stamp + '\t' + _key + ' PRESS')
-        if time.time() - last_press >= time_gap:
-            ret = func(*args, **kw)
-            last_press = time.time()
-        else:
-            print('should not reponse')
-            ret = False
+        ret = func(*args, **kw)
+        # if time.time() - last_press >= time_gap:
+        #     ret = func(*args, **kw)
+        #     last_press = time.time()
+        # else:
+        #     print('should not reponse')
+        #     ret = False
         return ret
     return yelling
 
@@ -52,11 +53,11 @@ class Maintance(KEYBOARD):
         if self.guardor.run_flag or self.reporter.run_flag:
             # self.reporter.oleder.show(['Red Press', 'Task stopping'])
             # 当前运行中
-            self.reporter.oleder.cls(level=5)
+            self.reporter.oleder.cls()
             self.reporter.stop()
             self.guardor.stop()
             print(time.strftime('%Y%m%d_%X', time.gmtime()) + "\tstopped")
-            self.reporter.oleder.alert(['Red Press', 'Task stopped'], level=2)
+            self.reporter.oleder.alert(['Red Press', 'Task stopped'])
         else:
             # self.reporter.oleder.show(['Red Press', 'Task starting'])
             # 当前没有运行
@@ -64,7 +65,7 @@ class Maintance(KEYBOARD):
             self.reporter.start()
             self.guardor.start()
             print(time.strftime('%Y%m%d_%X', time.gmtime()) + "\tstarted")
-            self.reporter.oleder.alert(['Red Press', 'Task started'], level=2)
+            self.reporter.oleder.alert(['Red Press', 'Task started'])
 
     @introduce
     def yellow(self):
@@ -97,7 +98,7 @@ class Maintance(KEYBOARD):
             print(time.strftime('%Y%m%d_%X', time.gmtime()) + '\toled off & buzzer off')
         self.reporter.oleder.alert(['Yellow Press',
             'OLED:     ' + TRANSLATE[self.reporter.show_in_oled],
-            'BUZZER: ' + TRANSLATE[self.reporter.show_in_buzzer]], level=2)
+            'BUZZER: ' + TRANSLATE[self.reporter.show_in_buzzer]])
         self.reporter.buzzer.beep(0.02, 0.1)
         self.reporter.start()
 
@@ -106,6 +107,7 @@ class Maintance(KEYBOARD):
         self.reporter.buzzer.beep(0.02, 0.1)
         flag, ret = self.thermometer.get_temperature()
         if ret:
+            print(str(ret) + ' 度')
             self.reporter.oleder.alert(['Blue Press', time.strftime('%X'), str(ret) + ' 度'])
         else:
             print('Failed to get temperature')
@@ -114,10 +116,9 @@ class Maintance(KEYBOARD):
     def orange(self):
         self.reporter.buzzer.beep(0.02, 0.1)
         self.reporter.oleder.alert(['Orange Press', time.strftime('%X')])
+
         self.led.flow()
 
-    def patrol(self):
-        self.reporter.oleder.cls()
 
     def before_start(self):
         self.reporter.oleder.show(['Keyboard', 'is', 'ready'], level=1)
