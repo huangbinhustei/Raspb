@@ -19,7 +19,6 @@ from rainbow import OLED, BUZZER
 
 xml = os.path.join(basedir, 'haarcascade_frontalface_default.xml')
 face_cascade = cv2.CascadeClassifier(xml)
-last_push = [0, 0, 0]
 task = queue.Queue(maxsize=6)
 
 
@@ -80,8 +79,7 @@ class REPORTER(OLED, BUZZER):
             with open(file_path, 'wb') as f:
                 f.write(buf)
 
-            global last_push
-            if time.time() - last_push[tool_id] >= 300:
+            if time.time() - self.last_push[tool_id] >= 300:
                 # 相同的推送原因，60 秒内只推送一次。推送原因不同时不受限制。
                 send_msg(msg[1], '\n\n'.join(msg))
                 if self.show_in_buzzer and time.time() - last_push[tool_id] >= 3600:
@@ -117,12 +115,11 @@ class GUARDOR:
             minNeighbors=5,
             minSize=(10, 10),
         )
+        return faces
 
 
     def __drawing(self, img, faces):
         color = (50, 255, 255)
-        if not faces:
-            return
         for x, y, w, h in faces:
             x *= self.rate
             y *= self.rate

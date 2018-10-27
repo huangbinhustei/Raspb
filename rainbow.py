@@ -98,6 +98,7 @@ class OLED:
         self.disp = Adafruit_SSD1306.SSD1306_128_64(rst=RST, dc=DC, spi=SPI.SpiDev(SPI_PORT, SPI_DEVICE, max_speed_hz=8000000))
 
         self.alart_lock = 0 # scroll 不需要 lock，alart 需要。
+        self.last_scroll = 0
 
         # Initialize library.
         self.disp.begin()
@@ -118,6 +119,15 @@ class OLED:
 
         self.font = ImageFont.truetype('/usr/share/fonts/truetype/wqy/wqy-microhei.ttc', 16)
         self.offset = 21
+        t1 = threading.Thread(target=self.__deling, args=())
+        t1.start()
+
+    def __deling(self):
+        while True:
+            time.sleep(1)
+            if time.time() - self.last_scroll >= 1:
+                self.scroll(' ')
+
 
     def scroll(self, line, x=0):
         # 优先级最低的展示方式，每次只能一行
@@ -134,6 +144,7 @@ class OLED:
         self.disp.image(self.image)
         self.disp.display()
         time.sleep(0.1)
+        self.last_scroll = time.time()
 
     def __alert(self, msgs, life_time, x):
         self.draw.rectangle((0, 0, self.disp.width, self.disp.height), outline=0, fill=0)
