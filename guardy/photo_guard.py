@@ -65,7 +65,7 @@ class REPORTER(OLED, BUZZER):
         tool_id == 1：写日志 + 保存 + 发消息
         tool_id == 2：写日志 + 保存 + 发消息 + 上云
         """
-        print('\t'.join(msg))
+        print('\t'.join(msg) + ' | ' + str(time.ctime()))
         if self.show_in_oled:
             msg_in_oled = msg
             msg_in_oled[0] = msg[0].split('_')[1]
@@ -96,6 +96,8 @@ class REPORTER(OLED, BUZZER):
         self.run_flag = True
         t1 = threading.Thread(target=self._running)
         t1.start()
+        t2 = threading.Thread(target=self._running)
+        t2.start()
 
     def stop(self):
         self.run_flag = False
@@ -104,19 +106,28 @@ class REPORTER(OLED, BUZZER):
 class GUARDOR:
     def __init__(self):
         self.size = (960, 720)
+        self.rate = 4
         self.run_flag = False
         
     def __is_face_in(self, frame):
-        return face_cascade.detectMultiScale(
+        frame = cv2.resize(frame, (960//self.rate, 720//self.rate))
+        faces = face_cascade.detectMultiScale(
             cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY),
             scaleFactor=1.15,
             minNeighbors=5,
-            minSize=(15, 15),
+            minSize=(10, 10),
         )
+
 
     def __drawing(self, img, faces):
         color = (50, 255, 255)
+        if not faces:
+            return
         for x, y, w, h in faces:
+            x *= self.rate
+            y *= self.rate
+            w *= self.rate
+            h *= self.rate
             cv2.rectangle(img, (x, y), (x + w, y + h), color, 1)
 
     def _running(self):

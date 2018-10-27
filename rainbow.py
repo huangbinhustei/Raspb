@@ -47,36 +47,18 @@ class KEYBOARD:
     def orange(self, key):
         pass
 
-    def __red(self, key):
-        self.when_press(key)
-        self.red(key)
-        self.when_pressed(key)
-
-    def __yellow(self, key):
-        self.when_press(key)
-        self.yellow(key)
-        self.when_pressed(key)
-
-    def __blue(self, key):
-        self.when_press(key)
-        self.blue(key)
-        self.when_pressed(key)
-
-    def __orange(self, key):
-        self.when_press(key)
-        self.orange(key)
-        self.when_pressed(key)
-
     def register(self):
         self.handle = {
-                    6: self.__red,
-                    13: self.__yellow,
-                    19: self.__blue,
-                    26: self.__orange,
+                    6: self.red,
+                    13: self.yellow,
+                    19: self.blue,
+                    26: self.orange,
                 }
 
     def key_interrupt(self, key):
+        self.when_press(key)
         self.handle[key](key)
+        self.when_pressed(key)
 
     def patrol(self):
         pass
@@ -140,7 +122,6 @@ class OLED:
     def scroll(self, line, x=0):
         # 优先级最低的展示方式，每次只能一行
         if time.time() - self.alart_lock <= 2:
-            print('有优先级更高的内容显示中，暂不显示')
             return
         
         self.draw.rectangle((0, 0, self.disp.width, self.disp.height), outline=0, fill=0)
