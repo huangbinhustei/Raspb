@@ -6,14 +6,8 @@ import threading
 import glob
 from functools import wraps
 from collections import defaultdict, deque
-import asyncio
 
 import RPi.GPIO as GPIO
-import Adafruit_GPIO.SPI as SPI
-import Adafruit_SSD1306
-from PIL import Image
-from PIL import ImageDraw
-from PIL import ImageFont
 
 
 class SR04:
@@ -40,7 +34,6 @@ class SR04:
         GPIO.cleanup()
 
 
-
 class SG90:
     def __init__(self):
         self.pin = 21
@@ -57,16 +50,16 @@ class SG90:
         self.p.ChangeDutyCycle(duty)
         time.sleep(0.1)
 
-
-    def run(self):
+    def test(self):
         # 0 ~ 10 对应 0 ~ 180°
-        for t in range(0, 198, 18):
+        for t in range(0, 181, 18):
             self.set_dir(t)
         time.sleep(0.3)
-        for t in range(0, 198, 18):
+        for t in range(0, 181, 18):
             self.set_dir(180 - t)
-
         self.p.stop()
+
+    def cleanup(self):
         GPIO.cleanup()
 
 
@@ -86,16 +79,10 @@ class RADAR(SG90, SR04):
             else:
                 distance = int(distance)
             result.append(str(distance))
-            # if distance >= 400:
-            #     print(str(t) + '\t:' + '测距失败，可能是角度过大')
-            # else:
-            #     print(str(t) + '\t:' + str(self.detect()) + 'cm')
             time.sleep(0.5)
         print('\t'.join(['', '', result[2], '', '']))
         print('\t'.join(['', result[3], '', result[1], '']))
         print('\t'.join([result[4], '', '', '', result[0]]))
-            
-
 
 
 class MK433:
