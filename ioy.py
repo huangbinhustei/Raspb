@@ -29,9 +29,6 @@ class SR04:
             pass
         pulse_end = time.time()
         return round((pulse_end - pulse_start) * 17150, 2)
-    
-    def clean(self):
-        GPIO.cleanup()
 
 
 class SG90:
@@ -59,9 +56,6 @@ class SG90:
             self.set_dir(180 - t)
         self.p.stop()
 
-    def cleanup(self):
-        GPIO.cleanup()
-
 
 class RADAR(SG90, SR04):
     def __init__(self):
@@ -74,15 +68,15 @@ class RADAR(SG90, SR04):
             self.set_dir(t)
             time.sleep(0.5)
             distance = self.detect()
-            if distance >= 400:
-                distance = 'Failed'
+            if distance >= 100:
+                distance = 'NA'
             else:
                 distance = int(distance)
             result.append(str(distance))
             time.sleep(0.5)
-        print('\t'.join(['', '', result[2], '', '']))
-        print('\t'.join(['', result[3], '', result[1], '']))
-        print('\t'.join([result[4], '', '', '', result[0]]))
+        print(''.join(['  ', '  ', result[2], '  ', '  ']))
+        print(''.join(['  ', result[3], '  ', result[1], '  ']))
+        print(''.join([result[4], '  ', '  ', '  ', result[0]]))
 
 
 class MK433:
@@ -113,9 +107,6 @@ class MK433:
         t1 = threading.Thread(target=self.__blink, args=(on_time, off_time, loop))
         t1.start()
 
-    def clean(self):
-        GPIO.cleanup()
-
 
 # m = MK433()
 # m.blink(on_time=2, off_time=2, loop=2)
@@ -132,3 +123,4 @@ class MK433:
 s = RADAR()
 print("任务开始")
 s.run()
+GPIO.cleanup()

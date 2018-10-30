@@ -211,6 +211,7 @@ class BUZZER:
 class LED:
     def __init__(self):
         self.led_pin = [23, 27, 22, 5]
+        self.shine = [0, 0, 0, 0]
         GPIO.setmode(GPIO.BCM)
         for i in self.led_pin:
             try:
@@ -222,12 +223,14 @@ class LED:
 
     def on(self, i):
         if i >= 0 and i <= 3:
+            self.shine[i] = 1
             GPIO.output(self.led_pin[i], GPIO.LOW)
         else:
             print('Wrong Index')
     
     def off(self, i):
         if i >= 0 and i <= 3:
+            self.shine[i] = 0
             GPIO.output(self.led_pin[i], GPIO.HIGH)
         else:
             print('Wrong Index')
@@ -244,14 +247,24 @@ class LED:
     def clean(self):
         GPIO.cleanup()
 
-    def __flow(self, delay, loop):
+    def __flow(self, delay, loop, reverse):
         # 闪 loop 个轮次
+        # tmp = self.shine[:]
+        # print(tmp)
         for j in range(loop):
             for i in range(4):
-                self.__blink(i, delay)
+                if reverse:
+                    self.__blink(3 - i, delay)
+                else:
+                    self.__blink(i, delay)
+        # for i in tmp:
+        #     if i:
+        #         self.on(i)
+        #     else:
+        #         self.off(i)
 
-    def flow(self, delay=0.25, loop=1):
-        t1 = threading.Thread(target=self.__flow, args=(delay, loop))
+    def flow(self, delay=0.25, loop=1, reverse=False):
+        t1 = threading.Thread(target=self.__flow, args=(delay, loop, reverse))
         t1.start()
 
 

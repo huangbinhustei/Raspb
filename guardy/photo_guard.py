@@ -82,7 +82,7 @@ class REPORTER(OLED, BUZZER):
             if time.time() - self.last_push[tool_id] >= 300:
                 # 相同的推送原因，60 秒内只推送一次。推送原因不同时不受限制。
                 send_msg(msg[1], '\n\n'.join(msg))
-                if self.show_in_buzzer and time.time() - last_push[tool_id] >= 3600:
+                if self.show_in_buzzer and time.time() - self.last_push[tool_id] >= 3600:
                     self.beep(0.1, 1)
                 self.last_push[tool_id] = time.time()
 

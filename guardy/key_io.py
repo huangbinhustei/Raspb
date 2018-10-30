@@ -29,8 +29,9 @@ class Maintance(KEYBOARD):
         stamp = time.strftime('%Y%m%d_%X', time.gmtime())
         print(stamp + '\t' + self.keys_name[self.keys_pin.index(key)] + ' PRESS')
         offset = self.keys_pin.index(key)
-        if offset != 3:
-            # 第三个按键本来就是 blink 了。
+        if offset in (1, 2):
+            # 第 0 个键通过 flow 提示。
+            # 第 3 个按键本来就是 blink 了。
             self.led.blink(offset, delay=1)
         
     def when_pressed(self, key):
@@ -39,18 +40,24 @@ class Maintance(KEYBOARD):
     def red(self, key):
         if self.guardor.run_flag or self.reporter.run_flag:
             # 当前运行中
+            self.led.flow(delay=0.25, reverse=True)
             self.reporter.cls()
             self.reporter.stop()
             self.guardor.stop()
             print(time.strftime('%Y%m%d_%X', time.gmtime()) + "\tstopped")
             self.reporter.alert(['Red Press', 'Task stopped'])
+            time.sleep(0.25*4 + 0.1)
+            self.led.off(0)
         else:
             # 当前没有运行
+            self.led.flow(delay=0.25)
             self.reporter.cls()
             self.reporter.start()
             self.guardor.start()
             print(time.strftime('%Y%m%d_%X', time.gmtime()) + "\tstarted")
             self.reporter.alert(['Red Press', 'Task started'])
+            time.sleep(0.25*4 + 0.1)
+            self.led.on(0)
 
     def yellow(self, key):
         candation = self.reporter.show_in_oled * 2 + self.reporter.show_in_buzzer
