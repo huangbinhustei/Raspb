@@ -270,6 +270,33 @@ class LED:
         t1 = threading.Thread(target=self.__flow, args=(delay, loop, reverse))
         t1.start()
 
+    def __msg_starting(self):
+        for i in range(4):
+            GPIO.output(self.led_pin[i], GPIO.HIGH)
+        for i in range(4):
+            GPIO.output(self.led_pin[i], GPIO.LOW)
+            time.sleep(0.25)
+        for i in range(4):
+            GPIO.output(self.led_pin[i], GPIO.HIGH)
+        time.sleep(0.1)
+
+    def __msg_stopping(self):
+        for i in range(4):
+            GPIO.output(self.led_pin[i], GPIO.LOW)
+        for i in range(4):
+            GPIO.output(self.led_pin[3 - i], GPIO.HIGH)
+            time.sleep(0.25)
+        for i in range(4):
+            GPIO.output(self.led_pin[i], GPIO.LOW)
+        time.sleep(0.1)
+
+    def msg(self, starting=True):
+        if starting:
+            t1 = threading.Thread(target=self.__msg_starting)
+        else:
+            t1 = threading.Thread(target=self.__msg_stopping)
+        t1.start()
+
 
 class DS18B20:
     def __init__(self):
