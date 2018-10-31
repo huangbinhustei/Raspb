@@ -236,9 +236,12 @@ class LED:
             print('Wrong Index')
 
     def __blink(self, i, delay=0.5):
-        self.on(i)
-        time.sleep(delay)
-        self.off(i)
+        if i >= 0 and i <= 3:
+            GPIO.output(self.led_pin[i], GPIO.LOW)
+            time.sleep(delay)
+            GPIO.output(self.led_pin[i], GPIO.HIGH)
+        else:
+            print('Wrong Index')
 
     def blink(self, i, delay=0.5):
         t1 = threading.Thread(target=self.__blink, args=(i, delay))
