@@ -236,35 +236,33 @@ class LED:
             print('Wrong Index')
 
     def __blink(self, i, delay=0.5):
-        if i >= 0 and i <= 3:
-            GPIO.output(self.led_pin[i], GPIO.LOW)
-            time.sleep(delay)
-            GPIO.output(self.led_pin[i], GPIO.HIGH)
-        else:
-            print('Wrong Index')
+        GPIO.output(self.led_pin[i], GPIO.LOW)
+        time.sleep(delay)
+        GPIO.output(self.led_pin[i], GPIO.HIGH)
+        
 
     def blink(self, i, delay=0.5):
-        t1 = threading.Thread(target=self.__blink, args=(i, delay))
-        t1.start()
+        if i >= 0 and i <= 3:
+            t1 = threading.Thread(target=self.__blink, args=(i, delay))
+            t1.start()
+        else:
+            print('Wrong Index')
 
     def clean(self):
         GPIO.cleanup()
 
     def __flow(self, delay, loop, reverse):
-        # 闪 loop 个轮次
-        # tmp = self.shine[:]
-        # print(tmp)
         for j in range(loop):
             for i in range(4):
                 if reverse:
                     self.__blink(3 - i, delay)
                 else:
                     self.__blink(i, delay)
-        # for i in tmp:
-        #     if i:
-        #         self.on(i)
-        #     else:
-        #         self.off(i)
+        for ind, _flag in enumerate(self.shine):
+            if _flag:
+                GPIO.output(self.led_pin[ind], GPIO.LOW)
+            else:
+                GPIO.output(self.led_pin[ind], GPIO.HIGH)
 
     def flow(self, delay=0.25, loop=1, reverse=False):
         t1 = threading.Thread(target=self.__flow, args=(delay, loop, reverse))
@@ -284,10 +282,10 @@ class LED:
         for i in range(4):
             GPIO.output(self.led_pin[i], GPIO.LOW)
         for i in range(4):
-            GPIO.output(self.led_pin[3 - i], GPIO.HIGH)
             time.sleep(0.25)
+            GPIO.output(self.led_pin[3 - i], GPIO.HIGH)
         for i in range(4):
-            GPIO.output(self.led_pin[i], GPIO.LOW)
+            GPIO.output(self.led_pin[i], GPIO.HIGH)
         time.sleep(0.1)
 
     def msg(self, starting=True):

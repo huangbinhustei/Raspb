@@ -25,7 +25,8 @@ class Maintance(KEYBOARD):
         self.led = LED()
 
     def when_press(self, key):
-        self.reporter.beep(0.01, 0.02)
+        if self.reporter.show_in_buzzer:
+            self.reporter.beep(0.005, 0.01)
         stamp = time.strftime('%Y%m%d_%X', time.gmtime())
         print(stamp + '\t' + self.keys_name[self.keys_pin.index(key)] + ' PRESS')
         offset = self.keys_pin.index(key)
@@ -40,7 +41,7 @@ class Maintance(KEYBOARD):
     def red(self, key):
         if self.guardor.run_flag or self.reporter.run_flag:
             # 当前运行中
-            self.led.flow(delay=0.25, reverse=True)
+            self.led.msg(starting=False)
             self.reporter.cls()
             self.reporter.stop()
             self.guardor.stop()
@@ -50,7 +51,7 @@ class Maintance(KEYBOARD):
             self.led.off(0)
         else:
             # 当前没有运行
-            self.led.flow(delay=0.25)
+            self.led.msg(starting=True)
             self.reporter.cls()
             self.reporter.start()
             self.guardor.start()
