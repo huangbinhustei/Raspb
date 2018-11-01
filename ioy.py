@@ -108,6 +108,48 @@ class MK433:
         t1.start()
 
 
+class RGB:
+    def __init__(self):
+        self.R = 16
+        self.G = 20
+        self.B = 21
+        GPIO.setmode(GPIO.BCM)
+        GPIO.setup(self.R, GPIO.OUT)
+        GPIO.output(self.R, GPIO.HIGH)
+        GPIO.setup(self.G, GPIO.OUT)
+        GPIO.output(self.G, GPIO.HIGH)
+        GPIO.setup(self.B, GPIO.OUT)
+        GPIO.output(self.B, GPIO.HIGH)
+
+        self.pwmR = GPIO.PWM(self.R, 500)
+        self.pwmG = GPIO.PWM(self.G, 500)
+        self.pwmB = GPIO.PWM(self.B, 500)
+
+        self.pwmR.start(0)
+        self.pwmG.start(0)
+        self.pwmB.start(0)
+    
+    def color(self, r, g, b, t=5):
+        print(str(r) + ':' + str(g) +  ':' + str(b))
+        self.pwmR.ChangeDutyCycle(int(r/2.55))
+        self.pwmG.ChangeDutyCycle(int(g/2.55))
+        self.pwmB.ChangeDutyCycle(int(b/2.55))
+        time.sleep(t)
+
+    def run(self):
+        t = 0.5
+        self.color(150, 0, 0, t)
+        self.color(0, 150, 0, t)
+        self.color(0, 0, 150, t)
+        self.color(150, 150, 0, t)
+        self.color(150, 0, 150, t)
+        self.color(0, 150, 150, t)
+        self.color(150, 150, 150, t)
+        self.pwmR.stop()
+        self.pwmG.stop()
+        self.pwmB.stop()
+        GPIO.cleanup()
+
 # m = MK433()
 # m.blink(on_time=2, off_time=2, loop=2)
 # print("任务开始")
