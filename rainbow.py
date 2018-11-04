@@ -125,7 +125,7 @@ class OLED:
     def __deling(self):
         while True:
             time.sleep(1)
-            if time.time() - self.last_scroll >= 1:
+            if time.time() - self.last_scroll >= 3:
                 self.scroll(' ')
 
 
