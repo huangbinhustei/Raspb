@@ -9,7 +9,7 @@ import RPi.GPIO as GPIO
 from photo_guard import REPORTER, GUARDOR
 basedir = os.path.abspath(os.path.dirname(__file__))
 sys.path.append(os.path.join(basedir, os.path.pardir))
-from bxin import face, send_msg, qiniu_put
+from bxin import face, qiniu_put
 from rainbow import OLED, BUZZER, KEYBOARD, DS18B20, LED
 
 

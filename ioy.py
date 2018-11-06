@@ -115,69 +115,61 @@ class RGB:
         self.B = 21
         GPIO.setmode(GPIO.BCM)
         GPIO.setwarnings(False)
+
         GPIO.setup(self.R, GPIO.OUT)
-        GPIO.output(self.R, GPIO.HIGH)
-        GPIO.setup(self.G, GPIO.OUT)
-        GPIO.output(self.G, GPIO.HIGH)
-        GPIO.setup(self.B, GPIO.OUT)
-        GPIO.output(self.B, GPIO.HIGH)
-
+        # GPIO.output(self.R, GPIO.HIGH)
         self.pwmR = GPIO.PWM(self.R, 1000)
-        self.pwmG = GPIO.PWM(self.G, 1000)
-        self.pwmB = GPIO.PWM(self.B, 1000)
-
         self.pwmR.start(0)
+
+        GPIO.setup(self.G, GPIO.OUT)
+        # GPIO.output(self.G, GPIO.HIGH)
+        self.pwmG = GPIO.PWM(self.G, 1000)
         self.pwmG.start(0)
+
+        GPIO.setup(self.B, GPIO.OUT)
+        # GPIO.output(self.B, GPIO.HIGH)
+        self.pwmB = GPIO.PWM(self.B, 1000)
         self.pwmB.start(0)
     
-    def color(self, r, g, b, t=5):
+    def __color(self, r, g, b, t=1):
         self.pwmR.ChangeDutyCycle(int(r/2.55))
         self.pwmG.ChangeDutyCycle(int(g/2.55))
         self.pwmB.ChangeDutyCycle(int(b/2.55))
         time.sleep(t)
 
-    def run(self):
-        t = 0.005
-        bottom = 1
-        top = 200
-        for x in range(2):
-            for i in range(bottom, top):
-                self.color(0, 0, i, t)
-            for i in range(0, top - bottom):
-                self.color(0, 0, top - i, t)
-            time.sleep(0.5)
-            for i in range(bottom, top):
-                self.color(0, i, 0, t)
-            for i in range(0, top - bottom):
-                self.color(0, top - i, 0, t)
-            time.sleep(0.5)
-            
+    def color(self, r, g, b, t=1):
+        t1 = threading.Thread(target=self.color, args=(r, g, b, t))
+        t1.start()
 
-        
-        
-        # self.color(0, 150, 0, t)
-        # self.color(0, 0, 150, t)
-        # self.color(150, 150, 0, t)
-        # self.color(150, 0, 150, t)
-        # self.color(0, 150, 150, t)
-        # self.color(150, 150, 150, t)
+    def __breath(self, tinct, loops, top, bottom, t, gap):
+        for x in range(loops):
+            for i in range(bottom, top):
+                self.__color(tinct[0] * i // top, tinct[1] * i // top, tinct[2] * i // top, t)
+            for i in range(0, top - bottom):
+                self.__color(tinct[0] * (top - i) // top, tinct[1] * (top - i) // top, tinct[2] * (top - i) // top, t)
+            time.sleep(gap)
         self.pwmR.stop()
         self.pwmG.stop()
         self.pwmB.stop()
 
-# m = MK433()
-# m.blink(on_time=2, off_time=2, loop=2)
-# print("任务开始")
+    def breath(self, tinct=(200, 200, 200), loops=2, top=200, bottom=1, t=0.005, gap=0.5):
+        t1 = threading.Thread(target=self.__breath, args=(tinct, loops, top, bottom, t, gap))
+        t1.start()
 
-# s = SG90()
-# print("任务开始")
-# s.run()
+if __name__ == '__main__':
+    # m = MK433()
+    # m.blink(on_time=2, off_time=2, loop=2)
+    # print("任务开始")
 
-# s = SR04()
-# print("任务开始")
-# s.run()
+    # s = SG90()
+    # print("任务开始")
+    # s.run()
 
-# s = RGB()
-# print("任务开始")
-# s.run()
-# GPIO.cleanup()
+    # s = SR04()
+    # print("任务开始")
+    # s.run()
+
+    s = RGB()
+    print("任务开始")
+    s.breath()
+    GPIO.cleanup()

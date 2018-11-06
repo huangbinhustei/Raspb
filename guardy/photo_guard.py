@@ -13,7 +13,7 @@ from picamera.array import PiRGBArray
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 sys.path.append(os.path.join(basedir, os.path.pardir))
-from bxin import face, send_msg, qiniu_put
+from bxin import face, FangTang, qiniu_put
 from rainbow import OLED, BUZZER
 from ioy import RGB
 
@@ -23,41 +23,68 @@ face_cascade = cv2.CascadeClassifier(xml)
 task = queue.Queue(maxsize=3)
 
 
-class NetWorker:
-    def __init__(self):
+def is_family(buf, door=(60, 30)):
+    b64s = str(base64.b64encode(buf), 'utf-8')
+    res = face.search(b64s, 'BASE64', 'Famaly', {'quality_control': 'LOW'})
+    if 0 == res['error_code']:
+        tmp = res['result']['user_list'][0]
+        ret = tmp['score']
+        if ret >= door[0]:
+            return 0, tmp['user_id'] + ': ' + str(int(ret))
+        elif ret >= door[1]:
+            return 1, tmp['user_id'] + ': ' + str(int(ret))
+        else:
+            return 2, tmp['user_id'] + ': ' + str(int(ret))
+    elif res['error_code'] in (223114, 222202, 222203, 222205, 222206):
+        # 图片模糊、没有识别到人、网络错误等，都暂不保存图片。
+        return 0, res['error_msg']
+    else:
+        return 0, res['error_msg']
+
+
+class REPORTER(OLED, BUZZER):
+    def __init__(self, show_in_oled=True, show_in_buzzer=False):
+        # NetWorker.__init__(self)
+        OLED.__init__(self)
+        BUZZER.__init__(self)
+        self.net_msg = FangTang()
+        self.show_in_oled = show_in_oled
+        self.show_in_buzzer = show_in_buzzer
         self.run_flag = False
-        self.last_push = [0, 0, 0]
         self.door = [60, 30]    # score of safe and nromal
-        self.door = [91, 80]    # score of safe and nromal
+
+    def recording(self, tool_id, msg, buf, stamp):
+        """
+        tool_id == 0：写日志
+        tool_id == 1：写日志 + 保存 + 发消息
+        tool_id == 2：写日志 + 保存 + 发消息 + 上云
+        """
+        print('\t'.join(msg) + ' | ' + str(time.ctime()))
+        if self.show_in_oled:
+            msg_in_oled = msg
+            msg_in_oled[0] = msg[0].split('_')[1]
+            self.scroll(' '.join(msg_in_oled))
+        with open(os.path.join(basedir, 'Persons', 'recording.txt'), 'a') as f:
+            f.write('\t'.join(msg) + '\n')
+
+        if tool_id >= 1:
+            name = time.strftime('%Y%m%d_%H%M%S', time.gmtime(stamp + 28800)) + '.jpg'
+            file_path = os.path.join(basedir, 'Persons', name)
+            with open(file_path, 'wb') as f:
+                f.write(buf)
+            self.net_msg.send(msg, tool_id)
+
+        if tool_id >= 2:
+            print('%s:Should sent to QINIU, delayed', name)
+            # qiniu_put(file_path, name, bucket_name='bxin', timeout=3600)
 
     def _running(self):
         while self.run_flag:
             buf, stamp = task.get()
-            tool_id, info = self.__is_family(buf)
+            tool_id, info = is_family(buf, self.door)
             msg = [time.strftime('%Y%m%d_%X', time.gmtime(stamp + 28800)), info]
             self.recording(tool_id, msg, buf, stamp)
         print('Reporter stopped')
-
-    def __is_family(self, buf):
-        b64s = str(base64.b64encode(buf), 'utf-8')
-        res = face.search(b64s, 'BASE64', 'Famaly', {'quality_control': 'LOW'})
-        if 0 == res['error_code']:
-            tmp = res['result']['user_list'][0]
-            ret = tmp['score']
-            if ret >= self.door[0]:
-                return 0, tmp['user_id'] + ': ' + str(int(ret))
-            elif ret >= self.door[1]:
-                return 1, tmp['user_id'] + ': ' + str(int(ret))
-            else:
-                return 2, tmp['user_id'] + ': ' + str(int(ret))
-        elif res['error_code'] in (223114, 222202, 222203, 222205, 222206):
-            # 图片模糊、没有识别到人、网络错误等，都暂不保存图片。
-            return 0, res['error_msg']
-        else:
-            return 0, res['error_msg']
-
-    def recording(self, tool_id, msg, buf, stamp):
-        pass
 
     def start(self, thdcount=1):
         self.run_flag = True
@@ -71,51 +98,12 @@ class NetWorker:
         self.run_flag = False
 
 
-class REPORTER(NetWorker, OLED, BUZZER):
-    def __init__(self, show_in_oled=True, show_in_buzzer=False):
-        NetWorker.__init__(self)
-        OLED.__init__(self)
-        BUZZER.__init__(self)
-        self.show_in_oled = show_in_oled
-        self.show_in_buzzer = show_in_buzzer
-
-    def recording(self, tool_id, msg, buf, stamp):
-        """
-        tool_id == 0：写日志
-        tool_id == 1：写日志 + 保存 + 发消息
-        tool_id == 2：写日志 + 保存 + 发消息 + 上云
-        """
-        print('\t'.join(msg) + ' | ' + str(time.ctime()))
-        if self.show_in_oled:
-            msg_in_oled = msg
-            msg_in_oled[0] = msg[0].split('_')[1]
-            # msg_in_oled[0] = msg[0].split('_')[1].replace(':', '')
-            self.scroll(' '.join(msg_in_oled))
-        with open(os.path.join(basedir, 'Persons', 'recording.txt'), 'a') as f:
-            f.write('\t'.join(msg) + '\n')
-
-        if tool_id >= 1:
-            name = time.strftime('%Y%m%d_%H%M%S', time.gmtime(stamp + 28800)) + '.jpg'
-            file_path = os.path.join(basedir, 'Persons', name)
-            with open(file_path, 'wb') as f:
-                f.write(buf)
-
-            if time.time() - self.last_push[tool_id] >= 300:
-                # 相同的推送原因，60 秒内只推送一次。推送原因不同时不受限制。
-                send_msg(msg[1], '\n\n'.join(msg))
-                if self.show_in_buzzer and time.time() - self.last_push[tool_id] >= 3600:
-                    self.beep(0.1, 1)
-                self.last_push[tool_id] = time.time()
-
-        if tool_id >= 2:
-            print('%s:Should sent to QINIU, delayed', name)
-            # qiniu_put(file_path, name, bucket_name='bxin', timeout=3600)
-
-
-class RGB_REPORTER(NetWorker, RGB):
+class RGB_REPORTER(RGB):
     def __init__(self):
-        NetWorker.__init__(self)
         RGB.__init__(self)
+        self.net_msg = FangTang()
+        self.run_flag = False
+        self.door = [60, 30]    # score of safe and nromal
 
     def recording(self, tool_id, msg, buf, stamp):
         """
@@ -127,22 +115,34 @@ class RGB_REPORTER(NetWorker, RGB):
         with open(os.path.join(basedir, 'Persons', 'recording.txt'), 'a') as f:
             f.write('\t'.join(msg) + '\n')
 
-        if tool_id >= 1:
+        if tool_id == 0:
+            self.breath(tinct=(0, 200, 0), loops=1)
+        else:
             name = time.strftime('%Y%m%d_%H%M%S', time.gmtime(stamp + 28800)) + '.jpg'
             file_path = os.path.join(basedir, 'Persons', name)
             with open(file_path, 'wb') as f:
                 f.write(buf)
+            self.net_msg.send(msg, tool_id)
+            if tool_id == 1:
+                self.breath(tinct=(0, 200, 0), loops=1)
+            else:
+                self.breath(tinct=(100, 50, 50), loops=1)
+    
+    def _running(self):
+        while self.run_flag:
+            buf, stamp = task.get()
+            tool_id, info = is_family(buf, self.door)
+            msg = [time.strftime('%Y%m%d_%X', time.gmtime(stamp + 28800)), info]
+            self.recording(tool_id, msg, buf, stamp)
+        print('Reporter stopped')
 
-            if time.time() - self.last_push[tool_id] >= 300:
-                # 相同的推送原因，60 秒内只推送一次。推送原因不同时不受限制。
-                send_msg(msg[1], '\n\n'.join(msg))
-                self.last_push[tool_id] = time.time()
-            self.color(0, 100, 0, 1)
+    def start(self, thdcount=1):
+        self.run_flag = True
+        t1 = threading.Thread(target=self._running)
+        t1.start()
 
-        if tool_id >= 2:
-            print('%s:Should sent to QINIU, delayed', name)
-            self.color(0, 0, 100, 1)
-            # qiniu_put(file_path, name, bucket_name='bxin', timeout=3600)
+    def stop(self):
+        self.run_flag = False
 
 
 class GUARDOR:
