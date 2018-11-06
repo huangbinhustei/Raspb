@@ -72,7 +72,7 @@ class REPORTER(OLED, BUZZER):
             file_path = os.path.join(basedir, 'Persons', name)
             with open(file_path, 'wb') as f:
                 f.write(buf)
-            self.net_msg.send(msg, tool_id)
+            self.net_msg.send(msg[1], '\n\n'.join(msg), tool_id)
 
         if tool_id >= 2:
             print('%s:Should sent to QINIU, delayed', name)
@@ -122,7 +122,7 @@ class RGB_REPORTER(RGB):
             file_path = os.path.join(basedir, 'Persons', name)
             with open(file_path, 'wb') as f:
                 f.write(buf)
-            self.net_msg.send(msg, tool_id)
+            self.net_msg.send(msg[1], '\n\n'.join(msg), tool_id)
             if tool_id == 1:
                 self.breath(tinct=(0, 200, 0), loops=1)
             else:
