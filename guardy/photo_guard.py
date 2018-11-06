@@ -15,32 +15,30 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 sys.path.append(os.path.join(basedir, os.path.pardir))
 from bxin import face, send_msg, qiniu_put
 from rainbow import OLED, BUZZER
+from ioy import RGB
 
 
 xml = os.path.join(basedir, 'haarcascade_frontalface_default.xml')
 face_cascade = cv2.CascadeClassifier(xml)
-task = queue.Queue(maxsize=6)
+task = queue.Queue(maxsize=3)
 
 
-class REPORTER(OLED, BUZZER):
-    def __init__(self, show_in_oled=True, show_in_buzzer=False):
-        OLED.__init__(self)
-        BUZZER.__init__(self)
+class NetWorker:
+    def __init__(self):
         self.run_flag = False
-        self.show_in_oled = show_in_oled
-        self.show_in_buzzer = show_in_buzzer
         self.last_push = [0, 0, 0]
         self.door = [60, 30]    # score of safe and nromal
+        self.door = [91, 80]    # score of safe and nromal
 
     def _running(self):
         while self.run_flag:
             buf, stamp = task.get()
             tool_id, info = self.__is_family(buf)
             msg = [time.strftime('%Y%m%d_%X', time.gmtime(stamp + 28800)), info]
-            self.__recording(tool_id, msg, buf, stamp)
+            self.recording(tool_id, msg, buf, stamp)
         print('Reporter stopped')
 
-    def __is_family(self, buf, safe=60, normal=30):
+    def __is_family(self, buf):
         b64s = str(base64.b64encode(buf), 'utf-8')
         res = face.search(b64s, 'BASE64', 'Famaly', {'quality_control': 'LOW'})
         if 0 == res['error_code']:
@@ -58,7 +56,30 @@ class REPORTER(OLED, BUZZER):
         else:
             return 0, res['error_msg']
 
-    def __recording(self, tool_id, msg, buf, stamp):
+    def recording(self, tool_id, msg, buf, stamp):
+        pass
+
+    def start(self, thdcount=1):
+        self.run_flag = True
+        t = []
+        for i in range(thdcount):
+            t.append(threading.Thread(target=self._running))
+        for j in t:
+            j.start()
+
+    def stop(self):
+        self.run_flag = False
+
+
+class REPORTER(NetWorker, OLED, BUZZER):
+    def __init__(self, show_in_oled=True, show_in_buzzer=False):
+        NetWorker.__init__(self)
+        OLED.__init__(self)
+        BUZZER.__init__(self)
+        self.show_in_oled = show_in_oled
+        self.show_in_buzzer = show_in_buzzer
+
+    def recording(self, tool_id, msg, buf, stamp):
         """
         tool_id == 0：写日志
         tool_id == 1：写日志 + 保存 + 发消息
@@ -90,20 +111,43 @@ class REPORTER(OLED, BUZZER):
             print('%s:Should sent to QINIU, delayed', name)
             # qiniu_put(file_path, name, bucket_name='bxin', timeout=3600)
 
-    def start(self):
-        self.run_flag = True
-        t1 = threading.Thread(target=self._running)
-        t1.start()
-        t2 = threading.Thread(target=self._running)
-        t2.start()
 
-    def stop(self):
-        self.run_flag = False
+class RGB_REPORTER(NetWorker, RGB):
+    def __init__(self):
+        NetWorker.__init__(self)
+        RGB.__init__(self)
+
+    def recording(self, tool_id, msg, buf, stamp):
+        """
+        tool_id == 0：写日志
+        tool_id == 1：写日志 + 保存 + 发消息
+        tool_id == 2：写日志 + 保存 + 发消息 + 上云
+        """
+        print(str(tool_id) + ':' + '\t'.join(msg) + ' | ' + str(time.ctime()))
+        with open(os.path.join(basedir, 'Persons', 'recording.txt'), 'a') as f:
+            f.write('\t'.join(msg) + '\n')
+
+        if tool_id >= 1:
+            name = time.strftime('%Y%m%d_%H%M%S', time.gmtime(stamp + 28800)) + '.jpg'
+            file_path = os.path.join(basedir, 'Persons', name)
+            with open(file_path, 'wb') as f:
+                f.write(buf)
+
+            if time.time() - self.last_push[tool_id] >= 300:
+                # 相同的推送原因，60 秒内只推送一次。推送原因不同时不受限制。
+                send_msg(msg[1], '\n\n'.join(msg))
+                self.last_push[tool_id] = time.time()
+            self.color(0, 100, 0, 1)
+
+        if tool_id >= 2:
+            print('%s:Should sent to QINIU, delayed', name)
+            self.color(0, 0, 100, 1)
+            # qiniu_put(file_path, name, bucket_name='bxin', timeout=3600)
 
 
 class GUARDOR:
     def __init__(self):
-        self.size = (960, 720)
+        self.size = (640, 480)
         self.rate = 4
         self.run_flag = False
         
@@ -161,3 +205,10 @@ class GUARDOR:
     
     def stop(self):
         self.run_flag = False
+
+
+if __name__ == '__main__':
+    reporter = RGB_REPORTER()
+    guardor = GUARDOR()
+    reporter.start()
+    guardor.start()

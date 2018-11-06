@@ -114,6 +114,7 @@ class RGB:
         self.G = 20
         self.B = 21
         GPIO.setmode(GPIO.BCM)
+        GPIO.setwarnings(False)
         GPIO.setup(self.R, GPIO.OUT)
         GPIO.output(self.R, GPIO.HIGH)
         GPIO.setup(self.G, GPIO.OUT)
@@ -176,7 +177,7 @@ class RGB:
 # print("任务开始")
 # s.run()
 
-s = RGB()
-print("任务开始")
-s.run()
-GPIO.cleanup()
+# s = RGB()
+# print("任务开始")
+# s.run()
+# GPIO.cleanup()
