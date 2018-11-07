@@ -212,3 +212,4 @@ if __name__ == '__main__':
     guardor = GUARDOR()
     reporter.start()
     guardor.start()
+    print('started')

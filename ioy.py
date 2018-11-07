@@ -110,6 +110,7 @@ class MK433:
 
 class RGB:
     def __init__(self):
+        self.breathing = False
         self.R = 16
         self.G = 20
         self.B = 21
@@ -117,17 +118,17 @@ class RGB:
         GPIO.setwarnings(False)
 
         GPIO.setup(self.R, GPIO.OUT)
-        # GPIO.output(self.R, GPIO.HIGH)
+        GPIO.output(self.R, GPIO.HIGH)
         self.pwmR = GPIO.PWM(self.R, 1000)
         self.pwmR.start(0)
 
         GPIO.setup(self.G, GPIO.OUT)
-        # GPIO.output(self.G, GPIO.HIGH)
+        GPIO.output(self.G, GPIO.HIGH)
         self.pwmG = GPIO.PWM(self.G, 1000)
         self.pwmG.start(0)
 
         GPIO.setup(self.B, GPIO.OUT)
-        # GPIO.output(self.B, GPIO.HIGH)
+        GPIO.output(self.B, GPIO.HIGH)
         self.pwmB = GPIO.PWM(self.B, 1000)
         self.pwmB.start(0)
     
@@ -138,21 +139,30 @@ class RGB:
         time.sleep(t)
 
     def color(self, r, g, b, t=1):
-        t1 = threading.Thread(target=self.color, args=(r, g, b, t))
+        t1 = threading.Thread(target=self.__color, args=(r, g, b, t))
         t1.start()
 
     def __breath(self, tinct, loops, top, bottom, t, gap):
+        self.breathing = True
         for x in range(loops):
             for i in range(bottom, top):
                 self.__color(tinct[0] * i // top, tinct[1] * i // top, tinct[2] * i // top, t)
             for i in range(0, top - bottom):
                 self.__color(tinct[0] * (top - i) // top, tinct[1] * (top - i) // top, tinct[2] * (top - i) // top, t)
             time.sleep(gap)
+        
+        self.breathing = False
+        print('breath break' + str(self.breathing))
         self.pwmR.stop()
         self.pwmG.stop()
         self.pwmB.stop()
+        
 
-    def breath(self, tinct=(200, 200, 200), loops=2, top=200, bottom=1, t=0.005, gap=0.5):
+    def breath(self, tinct=(0, 200, 0), loops=2, top=200, bottom=1, t=0.005, gap=0.5):
+        # self.__breath(tinct, loops, top, bottom, t, gap)
+        if self.breathing:
+            print("breathing" + str(self.breathing))
+            return
         t1 = threading.Thread(target=self.__breath, args=(tinct, loops, top, bottom, t, gap))
         t1.start()
 
@@ -172,4 +182,6 @@ if __name__ == '__main__':
     s = RGB()
     print("任务开始")
     s.breath()
+    time.sleep(5)
+    # s.color(0, 100, 0, 1)
     GPIO.cleanup()
