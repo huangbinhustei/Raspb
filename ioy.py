@@ -151,20 +151,20 @@ class RGB:
                 self.__color(tinct[0] * (top - i) // top, tinct[1] * (top - i) // top, tinct[2] * (top - i) // top, t)
             time.sleep(gap)
         
-        self.breathing = False
-        print('breath break' + str(self.breathing))
-        self.pwmR.stop()
-        self.pwmG.stop()
-        self.pwmB.stop()
-        
+        self.breathing = False    
 
-    def breath(self, tinct=(0, 200, 0), loops=2, top=200, bottom=1, t=0.005, gap=0.5):
-        # self.__breath(tinct, loops, top, bottom, t, gap)
+    def breath(self, tinct=(0, 200, 0), loops=2, top=200, bottom=1, t=0.005, gap=0.5, wait=False):
         if self.breathing:
-            print("breathing" + str(self.breathing))
             return
         t1 = threading.Thread(target=self.__breath, args=(tinct, loops, top, bottom, t, gap))
         t1.start()
+        if wait:
+            t1.join()
+
+    def quit(self):
+        self.pwmR.stop()
+        self.pwmG.stop()
+        self.pwmB.stop()
 
 if __name__ == '__main__':
     # m = MK433()
@@ -180,8 +180,8 @@ if __name__ == '__main__':
     # s.run()
 
     s = RGB()
-    print("任务开始")
-    s.breath()
-    time.sleep(5)
-    # s.color(0, 100, 0, 1)
+    s.breath(tinct=(0, 200, 0), wait=True)
+    s.breath(tinct=(0, 200, 200), wait=True)
+    s.breath(tinct=(50, 200, 200), wait=True)
+    s.quit()
     GPIO.cleanup()
