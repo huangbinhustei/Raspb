@@ -4,6 +4,7 @@ import os
 import time
 import threading
 import glob
+import math
 from functools import wraps
 from collections import defaultdict, deque
 
@@ -152,11 +153,26 @@ class RGB:
             time.sleep(gap)
         
         self.breathing = False    
+    
+    def __breath_sin(self, tinct, loops, top, bottom, t, gap):
+        self.breathing = True
+        step = math.pi/100
+        for x in range(loops):
+            for i in range(101):
+                p = math.sin(step * i) * math.sin(step * i)
+                self.__color(
+                    tinct[0] * p, 
+                    tinct[1] * p, 
+                    tinct[2] * p, 
+                    t)
+            time.sleep(gap)
+        
+        self.breathing = False    
 
-    def breath(self, tinct=(0, 200, 0), loops=2, top=200, bottom=1, t=0.005, gap=0.5, wait=False):
+    def breath(self, tinct=(0, 200, 0), loops=2, top=200, bottom=1, t=0.02, gap=1, wait=False):
         if self.breathing:
             return
-        t1 = threading.Thread(target=self.__breath, args=(tinct, loops, top, bottom, t, gap))
+        t1 = threading.Thread(target=self.__breath_sin, args=(tinct, loops, top, bottom, t, gap))
         t1.start()
         if wait:
             t1.join()
