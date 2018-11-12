@@ -110,11 +110,11 @@ class MK433:
 
 
 class RGB:
-    def __init__(self):
+    def __init__(self, r=16, g=20, b=21):
         self.breathing = False
-        self.R = 16
-        self.G = 20
-        self.B = 21
+        self.R = r
+        self.G = g
+        self.B = b
         GPIO.setmode(GPIO.BCM)
         GPIO.setwarnings(False)
 
@@ -196,8 +196,23 @@ if __name__ == '__main__':
     # s.run()
 
     s = RGB()
+    s.breath(tinct=(200, 0, 0), wait=True)
     s.breath(tinct=(0, 200, 0), wait=True)
+    s.breath(tinct=(0, 0, 200), wait=True)
+    s.breath(tinct=(200, 200, 0), wait=True)
+    s.breath(tinct=(200, 0, 200), wait=True)
     s.breath(tinct=(0, 200, 200), wait=True)
-    s.breath(tinct=(50, 200, 200), wait=True)
+    s.breath(tinct=(200, 200, 200), wait=True)
     s.quit()
+
+    s2 = RGB(r=26, g=19, b=13)
+    s2.breath(tinct=(200, 0, 0), wait=True)
+    s2.breath(tinct=(0, 200, 0), wait=True)
+    s2.breath(tinct=(0, 0, 200), wait=True)
+    s2.breath(tinct=(200, 200, 0), wait=True)
+    s2.breath(tinct=(200, 0, 200), wait=True)
+    s2.breath(tinct=(0, 200, 200), wait=True)
+    s2.breath(tinct=(200, 200, 200), wait=True)
+    s2.quit()
+
     GPIO.cleanup()
