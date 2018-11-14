@@ -109,6 +109,33 @@ class MK433:
         t1.start()
 
 
+class SR501:
+    def __init__(self, pin=4):
+        self.pin = 4
+        GPIO.setmode(GPIO.BCM)
+        GPIO.setup(self.pin, GPIO.IN)
+        self.output = False
+        self.run_flag = False
+
+    def _run(self):
+        while self.run_flag:
+            if GPIO.input(self.pin) == True:
+                self.output = True
+            else:
+                self.output = False
+            # print(self.output)
+            time.sleep(1)
+        print('Task Exit')
+    
+    def start(self):
+        self.run_flag = True
+        t1 = threading.Thread(target=self._run)
+        t1.start()
+
+    def stop(self):
+        self.run_flag = False
+
+
 class RGB:
     def __init__(self, r=16, g=20, b=21):
         self.breathing = False
@@ -195,24 +222,27 @@ if __name__ == '__main__':
     # print("任务开始")
     # s.run()
 
-    s = RGB()
-    s.breath(tinct=(200, 0, 0), wait=True)
-    s.breath(tinct=(0, 200, 0), wait=True)
-    s.breath(tinct=(0, 0, 200), wait=True)
-    s.breath(tinct=(200, 200, 0), wait=True)
-    s.breath(tinct=(200, 0, 200), wait=True)
-    s.breath(tinct=(0, 200, 200), wait=True)
-    s.breath(tinct=(200, 200, 200), wait=True)
-    s.quit()
+    # s = RGB()
+    # s.breath(tinct=(200, 0, 0), wait=True)
+    # s.breath(tinct=(0, 200, 0), wait=True)
+    # s.breath(tinct=(0, 0, 200), wait=True)
+    # s.breath(tinct=(200, 200, 0), wait=True)
+    # s.breath(tinct=(200, 0, 200), wait=True)
+    # s.breath(tinct=(0, 200, 200), wait=True)
+    # s.breath(tinct=(200, 200, 200), wait=True)
+    # s.quit()
 
-    s2 = RGB(r=26, g=19, b=13)
-    s2.breath(tinct=(200, 0, 0), wait=True)
-    s2.breath(tinct=(0, 200, 0), wait=True)
-    s2.breath(tinct=(0, 0, 200), wait=True)
-    s2.breath(tinct=(200, 200, 0), wait=True)
-    s2.breath(tinct=(200, 0, 200), wait=True)
-    s2.breath(tinct=(0, 200, 200), wait=True)
-    s2.breath(tinct=(200, 200, 200), wait=True)
-    s2.quit()
+    # s2 = RGB(r=26, g=19, b=13)
+    # s2.breath(tinct=(200, 0, 0), wait=True)
+    # s2.breath(tinct=(0, 200, 0), wait=True)
+    # s2.breath(tinct=(0, 0, 200), wait=True)
+    # s2.breath(tinct=(200, 200, 0), wait=True)
+    # s2.breath(tinct=(200, 0, 200), wait=True)
+    # s2.breath(tinct=(0, 200, 200), wait=True)
+    # s2.breath(tinct=(200, 200, 200), wait=True)
+    # s2.quit()
 
-    GPIO.cleanup()
+    s = SR501()
+    s.start()
+
+    # GPIO.cleanup()
