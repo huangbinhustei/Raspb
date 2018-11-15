@@ -152,7 +152,7 @@ class GUARDOR:
         self.run_flag = False
         
     def __is_face_in(self, frame):
-        frame = cv2.resize(frame, (960//self.rate, 720//self.rate))
+        frame = cv2.resize(frame, (self.size[0]//self.rate, self.size[1]//self.rate))
         faces = face_cascade.detectMultiScale(
             cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY),
             scaleFactor=1.15,
@@ -160,7 +160,6 @@ class GUARDOR:
             minSize=(10, 10),
         )
         return faces
-
 
     def __drawing(self, img, faces):
         color = (50, 255, 255)

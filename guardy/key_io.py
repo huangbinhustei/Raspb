@@ -34,6 +34,7 @@ class Maintance(KEYBOARD):
             # 第 0 个键通过 flow 提示。
             # 第 3 个按键本来就是 blink 了。
             self.led.blink(offset, delay=1)
+        self.reporter.last_interrupt = time.time()
         
     def when_pressed(self, key):
         pass
@@ -102,7 +103,12 @@ class Maintance(KEYBOARD):
 
     def orange(self, key):
         self.reporter.alert(['Orange Press', time.strftime('%X')])
-        self.led.flow()
+        if self.led.turn:
+            self.led.flow(reverse=True, wait=True)
+            self.led.turn_off()
+        else:
+            self.led.flow(wait=True)
+            self.led.turn_on()
 
     def before_start(self):
         self.reporter.alert(['Keyboard', 'is', 'ready'], life_time=5)

@@ -220,6 +220,46 @@ class LED:
                 print(str(i) + 'is using')
         for i in self.led_pin:
             GPIO.output(i, GPIO.HIGH)
+        self.going = False
+        self.last_interrupt = 0
+        self.turn = True
+        # self.ongoing()
+
+    def turn_off(self):
+        # 不改变状态，关闭所有的灯
+        for i in range(4):
+            GPIO.output(self.led_pin[i], GPIO.HIGH)
+        self.turn = False
+
+    def turn_on(self):
+        # 按照shine状态显示灯
+        for ind, _flag in enumerate(self.shine):
+            if _flag:
+                GPIO.output(self.led_pin[ind], GPIO.LOW)
+            else:
+                GPIO.output(self.led_pin[ind], GPIO.HIGH)
+        self.turn = True
+
+    def __ongoing(self, gap, shine):
+        while self.going:
+            if time.time() - self.last_interrupt <= 30:
+                time.sleep(5)
+                continue
+            for i in range(4):
+                # 全部熄灭
+                GPIO.output(self.led_pin[i], GPIO.HIGH)
+            time.sleep(gap)
+            for ind, _flag in enumerate(self.shine):
+                if _flag:
+                    GPIO.output(self.led_pin[ind], GPIO.LOW)
+                else:
+                    GPIO.output(self.led_pin[ind], GPIO.HIGH)
+            time.sleep(shine)
+
+    def ongoing(self, gap=5, shine=0.1):
+        self.going = True
+        t1 = threading.Thread(target=self.__ongoing, args=(gap, shine))
+        t1.start()
 
     def on(self, i):
         if i >= 0 and i <= 3:
@@ -264,9 +304,11 @@ class LED:
             else:
                 GPIO.output(self.led_pin[ind], GPIO.HIGH)
 
-    def flow(self, delay=0.25, loop=1, reverse=False):
+    def flow(self, delay=0.25, loop=1, reverse=False, wait=False):
         t1 = threading.Thread(target=self.__flow, args=(delay, loop, reverse))
         t1.start()
+        if wait:
+            t1.join()
 
     def __msg_starting(self):
         for i in range(4):
@@ -288,12 +330,14 @@ class LED:
             GPIO.output(self.led_pin[i], GPIO.HIGH)
         time.sleep(0.1)
 
-    def msg(self, starting=True):
+    def msg(self, starting=True, wait=False):
         if starting:
             t1 = threading.Thread(target=self.__msg_starting)
         else:
             t1 = threading.Thread(target=self.__msg_stopping)
         t1.start()
+        if wait:
+            t1.join()
 
 
 class DS18B20:
