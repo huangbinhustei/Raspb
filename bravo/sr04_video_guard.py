@@ -28,6 +28,7 @@ class RECORDOR(SR04, FangTang):
         self.video_length = video_length
         
     def _run(self):
+        flag = False
         with PiCamera() as camera:
             camera.resolution = self.size
             raw_capture = PiRGBArray(camera, size=self.size)
@@ -36,12 +37,18 @@ class RECORDOR(SR04, FangTang):
             for frame in camera.capture_continuous(raw_capture, format='bgr', use_video_port=True):
                 raw_capture.truncate(0)
                 distance = self.detect()
+                stamp = time.gmtime(time.time() + 28800)
+
                 if self.safe_range[0] < distance < self.safe_range[1]:
-                    print('Safe：' + str(distance))
+                    flag = False
+                    print(time.strftime('%Y-%m-%d %H:%M:%S', stamp) + '\t安全：' + str(distance) + 'cm')
+                    time.sleep(1)
+                elif distance > self.safe_range[1] and not flag:
+                    flag = True
+                    print(time.strftime('%Y-%m-%d %H:%M:%S', stamp) + '\t安全：' + str(distance) + 'cm')
                     time.sleep(1)
                 else:
-                    stamp = time.gmtime(time.time() + 28800)
-                    print(time.strftime('%Y-%m-%d %H:%M:%S', stamp) + '\t有人' + ' @ ' + str(distance) + 'cm')
+                    print(time.strftime('%Y-%m-%d %H:%M:%S', stamp) + '\t有人：' + str(distance) + 'cm')
                     
                     # camera.start_recording(time.strftime('%Y%m%d%H%M%S', stamp) + '.h264')
                     # camera.wait_recording(self.video_length)

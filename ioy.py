@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-print('import start')
 import requests
 import os
 import time
@@ -11,12 +10,11 @@ from collections import defaultdict, deque
 
 import RPi.GPIO as GPIO
 
-print('import end')
 
 class SR04:
-    def __init__(self):
-        self.trig = 16
-        self.echo = 20
+    def __init__(self, trig=16, echo=20):
+        self.trig = trig
+        self.echo = echo
         GPIO.setmode(GPIO.BCM)
         GPIO.setup(self.trig, GPIO.OUT, initial=GPIO.LOW)
         GPIO.setup(self.echo, GPIO.IN)
@@ -35,8 +33,8 @@ class SR04:
 
 
 class SG90:
-    def __init__(self):
-        self.pin = 21
+    def __init__(self, pin=21):
+        self.pin = pin
         GPIO.setmode(GPIO.BCM)
         GPIO.setup(self.pin, GPIO.OUT, initial=GPIO.LOW)
         self.p = GPIO.PWM(self.pin, 50)
@@ -85,9 +83,9 @@ class RADAR(SG90, SR04):
 
 
 class MK433:
-    def __init__(self):
+    def __init__(self, pin=20):
         # MK433 和 SR04 公用了一个管脚，同时只能用一个。
-        self.pin = 20
+        self.pin = pin
         GPIO.setmode(GPIO.BCM)
         #循环遍历存放引脚的数组
         GPIO.setup(self.pin, GPIO.OUT)
@@ -115,7 +113,7 @@ class MK433:
 
 class SR501:
     def __init__(self, pin=4):
-        self.pin = 4
+        self.pin = pin
         GPIO.setmode(GPIO.BCM)
         GPIO.setup(self.pin, GPIO.IN)
         self.output = False
