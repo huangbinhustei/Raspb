@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+print('import start')
 import requests
 import os
 import time
@@ -10,6 +11,7 @@ from collections import defaultdict, deque
 
 import RPi.GPIO as GPIO
 
+print('import end')
 
 class SR04:
     def __init__(self):
@@ -78,6 +80,8 @@ class RADAR(SG90, SR04):
         print(''.join(['  ', '  ', result[2], '  ', '  ']))
         print(''.join(['  ', result[3], '  ', result[1], '  ']))
         print(''.join([result[4], '  ', '  ', '  ', result[0]]))
+        self.set_dir(90)
+        time.sleep(0.5)
 
 
 class MK433:
@@ -123,7 +127,7 @@ class SR501:
                 self.output = True
             else:
                 self.output = False
-            # print(self.output)
+            print(self.output)
             time.sleep(1)
         print('Task Exit')
     
@@ -210,6 +214,9 @@ class RGB:
         self.pwmB.stop()
 
 if __name__ == '__main__':
+
+    s = RADAR()
+    s.run()
     # m = MK433()
     # m.blink(on_time=2, off_time=2, loop=2)
     # print("任务开始")
@@ -242,7 +249,7 @@ if __name__ == '__main__':
     # s2.breath(tinct=(200, 200, 200), wait=True)
     # s2.quit()
 
-    s = SR501()
-    s.start()
+    # s = SR501()
+    # s.start()
 
     # GPIO.cleanup()
