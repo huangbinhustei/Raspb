@@ -47,12 +47,11 @@ class RECORDOR(SR04, FangTang):
                     # camera.wait_recording(self.video_length)
                     # camera.stop_recording()
 
-                    
                     camera.framerate = 24
                     camera.start_preview()
                     # camera.annotate_background = Color('black')
                     camera.annotate_text_size = 16
-                    camera.annotate_frame_num = True
+                    # camera.annotate_frame_num = True
                     camera.annotate_text = time.strftime('%Y-%m-%d %H:%M:%S', stamp)
                     camera.start_recording(time.strftime('%Y%m%d%H%M%S', stamp) + '.h264')
                     start = time.time()
