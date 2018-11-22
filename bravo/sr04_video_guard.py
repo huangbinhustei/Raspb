@@ -3,8 +3,6 @@ import os
 import sys
 import time
 import threading
-import base64
-import queue
 
 from picamera import PiCamera, Color
 
@@ -85,7 +83,6 @@ class RECORDOR(SR04, FangTang):
 
 
 if __name__ == '__main__':
-    # reporter = RECORDOR(test_mode=True)
     reporter = RECORDOR()
     reporter.start()
     print('started')
