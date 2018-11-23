@@ -14,7 +14,7 @@ DBSession = sessionmaker(bind=engine)
 class Info(Base):
     __tablename__ = 'Info'
     now = Column(Integer(), primary_key=True)
-    device = Column(Integer())  # {0:bravo, 1:zero, 2:alpha}
+    # device = Column(Integer())  # {0:bravo, 1:zero, 2:alpha}
     cpu_percent = Column(Float())
     cpu_temp = Column(Float())
     free_ram = Column(Float())

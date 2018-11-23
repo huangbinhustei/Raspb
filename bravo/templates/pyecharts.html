@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>Raspberry</title>
+    {% for jsfile_name in script_list %}
+        <script src="{{ host }}/{{ jsfile_name }}.js"></script>
+    {% endfor %}
+</head>
+
+<body>
+	<div class='page'>
+		<div class='card'>
+			{{ cpu|safe }}	
+		</div>
+		<br>
+		<div class='card'>
+			{{ space|safe }}	
+		</div>
+	</div>
+</body>
+
+</html>
+
+<style type="text/css">
+body {
+/*	padding:0;
+	margin:0;
+	margin:0 auto;*/
+	background-color:#ddd;
+}
+
+.page {
+	width:830px;
+	/*height:860px;*/
+	margin:0 auto;
+	padding: 10px;
+	background-color:#eee;
+	/*;*/
+	box-shadow:  5px 5px 10px #888
+}
+
+.card {
+	padding: 10px;
+	/*width:810px;*/
+	border:1px solid #ccc;
+	background-color:#fff;
+}

@@ -28,6 +28,7 @@ class RECORDOR(SR04, FangTang):
             distance = self.detect()
             stamp = time.gmtime(time.time() + 28800)
             print(time.strftime('%Y-%m-%d %H:%M:%S', stamp) + ' 测试模式：' + str(distance) + 'cm')
+            time.sleep(1)
         print('停止测试')
     
     def _run(self):
