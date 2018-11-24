@@ -3,6 +3,7 @@ import time
 import sys
 
 from flask import Flask, render_template, request, jsonify
+import requests
 from sqlalchemy import and_
 from pyecharts import Line, Page
 import picamera
@@ -13,7 +14,7 @@ from data.sheets import *
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 sys.path.append(basedir)
-
+zeroy = "http://192.168.50.42:5000"
 
 app = Flask(__name__)
 app.config.update(DEBUG=True)
@@ -48,7 +49,7 @@ def api_guardor():
     
 
 @app.route('/api/info')
-def api_bravo_info():
+def api_info():
     cpu_temp, cpu_percent = get_cpu_info()
     free_ram = get_ram_info()
     free_disk = get_disk_info()
@@ -59,7 +60,7 @@ def api_bravo_info():
 
 
 @app.route('/api/photo')
-def api_bravo_photo():
+def api_photo():
     camera = picamera.PiCamera()
     camera.resolution = (1920, 1080)
     try:
@@ -74,7 +75,49 @@ def api_bravo_photo():
 @app.route('/api/zero/info')
 def api_zero_info():
     # 调用 zero 的 api 函数
-    pass
+    response = requests.get(zeroy + '/api/info')
+    if 200 == response.status_code:
+        return jsonify(response.json())
+    else:
+        return jsonify(errorcode=-1, msg='检查树莓派 Zero 是否启动了 flask', http_error_code=response.status_code)
+
+
+@app.route('/api/zero/rgb')
+def api_zero_rgb():
+    # 调用 zero 的 api 函数
+    cmd = request.args.get('cmd', default='breath')
+    r = request.args.get('r', default=None)
+    g = request.args.get('g', default=None)
+    b = request.args.get('b', default=None)    
+    response = requests.get(zeroy + '/api/rgb', params={"cmd":cmd, "r":r, "g":g, "b":b})
+    if 200 == response.status_code:
+        return jsonify(response.json())
+    else:
+        return jsonify(errorcode=-1, msg='检查树莓派 Zero 是否启动了 flask', http_error_code=response.status_code)
+
+
+@app.route('/api/zero/photo')
+def api_zero_photo():
+    # 调用 zero 的 api 函数
+    name = request.args.get('name', default=None)
+    response = requests.get(zeroy + '/api/photo', params={"name":name})
+    if 200 == response.status_code:
+        return jsonify(response.json())
+    else:
+        return jsonify(errorcode=-1, msg='检查树莓派 Zero 是否启动了 flask', http_error_code=response.status_code)
+
+
+@app.route('/api/zero/lapse')
+def api_zero_lapse():
+    # 调用 zero 的 api 函数
+    cmd = request.args.get('cmd', default=None)
+    gap = request.args.get('gap', default=None)
+    cap = request.args.get('cap', default=None)
+    response = requests.get(zeroy + '/api/lapse', params={'cmd': cmd, 'gap':gap, 'cap':cap})
+    if 200 == response.status_code:
+        return jsonify(response.json())
+    else:
+        return jsonify(errorcode=-1, msg='检查树莓派 Zero 是否启动了 flask', http_error_code=response.status_code)
 
 
 def get_info(start, end):
@@ -187,7 +230,7 @@ def group_line_maker(start, end, group_by):
     return line_cpu, line_space, js_list
 
 
-@app.route("/month")
+@app.route("/info/month")
 def last_month():
     # 按天显示
     end = int(time.time())
@@ -204,7 +247,7 @@ def last_month():
     )
 
 
-@app.route("/week")
+@app.route("/info/week")
 def last_week():
     # 按天显示
     end = int(time.time())
@@ -221,7 +264,7 @@ def last_week():
     )
 
 
-@app.route("/day")
+@app.route("/info/day")
 def last_day():
     # 按小时显示
     dawn = int(time.time() / 86400) * 86400 - 28800
@@ -244,8 +287,8 @@ def last_day():
     )
 
 
-@app.route("/")
-@app.route("/recent")
+@app.route("/info")
+@app.route("/info/recent")
 def recent():
     # dawn = int(time.time() / 86400) * 86400 - 28800
     end = int(time.time())
@@ -268,6 +311,11 @@ def recent():
         host='https://pyecharts.github.io/assets/js',
         script_list=js_list,
     )
+
+
+@app.route("/")
+def index():
+    return render_template("index.html")
 
 
 if __name__ == '__main__':

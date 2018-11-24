@@ -94,15 +94,6 @@ def api_photo():
 def help():
     return render_template(
         "index.html")
-    return (
-        "<h2>功能列表</h2>" + 
-        '<ul>' + 
-        '<li>/api/info</li>' + 
-        '<li>/api/rgb, cmd in (breath, color), params={r:r, g:g, b:b}</li>' + 
-        '<li>/api/photo, cmd in (), params=name, not name.jpg</li>' + 
-        '<li>/api/lapse, cmd in (start, stop), params={gap:60, cap:1440}</li>' + 
-        '</ul>'
-    )
 
 
 if __name__ == '__main__':
