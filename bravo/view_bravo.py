@@ -8,8 +8,8 @@ from sqlalchemy import and_
 from pyecharts import Line, Page
 import picamera
 
-from sr04_video_guard import RECORDOR
-from sys_info import *
+from feature.sr04_video_guard import RECORDOR
+from feature.sys_info import get_cpu_info, get_ram_info, get_disk_info
 from data.sheets import *
 
 basedir = os.path.abspath(os.path.dirname(__file__))
@@ -27,25 +27,19 @@ guardor = RECORDOR()
 
 @app.route('/api/guardor')
 def api_guardor():
-    try:
-        cmd = request.args.get('cmd').lower()
-        if 'start' == cmd:
-            guardor.start()
-            return jsonify(errorcode=0, command='start')
-        elif 'test' == cmd:
-            guardor.start(test_mode=True)
-            return jsonify(errorcode=0, command='test')
-        elif 'stop' == cmd:
-            guardor.stop()
-            return jsonify(errorcode=0, command='stop')
-        else:
-            return jsonify(errorcode=-1, command='unknown command')
-            # 不做操作。
-            pass
-    except:
+    cmd = request.args.get('cmd', default="Nothing").lower()
+    if 'start' == cmd:
+        guardor.start()
+        return jsonify(errorcode=0, command='start', status=guardor.running)
+    elif 'test' == cmd:
+        guardor.start(test_mode=True)
+        return jsonify(errorcode=0, command='test', status=guardor.running)
+    elif 'stop' == cmd:
+        guardor.stop()
+        return jsonify(errorcode=0, command='stop', status=guardor.running)
+    else:
         # 不做操作。
-        return jsonify(errorcode=0, status=guardor.running)
-        pass
+        return jsonify(errorcode=-1, command='unknown command', status=guardor.running)
     
 
 @app.route('/api/info')
