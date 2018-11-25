@@ -12,6 +12,7 @@ sys.path.append(os.path.join(basedir, os.path.pardir))
 from bxin import face, FangTang, qiniu_put
 from ioy import RGB
 from feature.lapsy import LAPSE
+from feature.dvaluy import Dvalue
 
 app = Flask(__name__)
 # app.config.update()
@@ -41,23 +42,23 @@ def api_lapse():
         return jsonify(errorcode=-1, command='unknown command', status=lapse.running)
 
 
-@app.route('/api/dvaluy')
-def api_dvaluy():
+@app.route('/api/dvalue')
+def api_dvalue():
     cmd = request.args.get('cmd', default=False)
     if 'start' == cmd:
         if dvalue.running:
             return jsonify(errorcode=1, msg='已经在进行中了')
         else:
             gap = request.args.get('gap', default=False)
-            cap = request.args.get('cap', default=False)
-            gap_value = int(gap) if gap else 60
-            cap_value = int(cap) if cap else 9999999999
-            print(gap, cap, gap_value, cap_value)
-            dvalue.start(gap=gap_value, cap=cap_value)
-            return jsonify(errorcode=0, gap=gap, cap=cap, start_time=time.ctime())
+            last = request.args.get('last', default=False)
+            gap_value = int(gap) if gap else 6
+            last_value = int(last) if last else 60
+            print(gap, last, gap_value, last_value)
+            dvalue.start(gap=gap_value, last=last_value)
+            return jsonify(errorcode=0, gap=gap, last=last, start_time=time.ctime())
     elif 'stop' == cmd:
         dvalue.stop()
-        return jsonify(errorcode=0, records=str(dvalue.frames))
+        return jsonify(errorcode=0, status=dvalue.running, records=str(dvalue.records))
     else:
         return jsonify(errorcode=-1, command='unknown command', status=dvalue.running)
 
