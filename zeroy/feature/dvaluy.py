@@ -56,11 +56,11 @@ class Dvalue:
                     diff_last = sum([0 if x[0]==x[1] else 1 for x in zip(last_model, model)])
 
                     if diff_last <= 5:
-                        # 和首帧不一样，但是和上一帧一样
+                        # 和上一帧一样
                         print(' | '.join(['一致', time.ctime(), str(diff_last)]))
                         time.sleep(1)
                     else:
-                        # 和上一帧也不一样。
+                        # 和上一帧不一样。
                         last_model = model
                         print(' | '.join(['大不一样', time.ctime(), str(diff_last)]))
                         self.rgb.breath(tinct=(200, 200, 200), loops=3)
