@@ -6,6 +6,7 @@ import threading
 import cv2
 from picamera import PiCamera
 from picamera.array import PiRGBArray
+from rpi_rf import RFDevice
 
 
 basedir = os.path.abspath(os.path.dirname(__file__))
@@ -15,9 +16,21 @@ from ioy import RGB
 
 
 class Dvalue:
-    def __init__(self):
+    def __init__(self, send_pin=25):
         self.rgb = RGB()
         self.running = False
+        self.rf = RFDevice(send_pin)
+        self.rf.enable_tx()
+
+    
+    def _msg(self, info, protocol, pulselength, tinct):
+        for _ in range(5):
+            self.rf.tx_code(info, protocol, pulselength)
+        self.rf.tx_code(100, protocol, pulselength)
+
+    def msg(self, info, tinct):
+        tf = threading.Thread(target=self._msg, args=(info, None, None, tinct))
+        tf.start()
 
     def saving(self, frame):
         _, img = cv2.imencode('.jpg', frame)
@@ -63,6 +76,8 @@ class Dvalue:
                         # 和上一帧不一样。
                         last_model = model
                         print(' | '.join(['大不一样', time.ctime(), str(diff_last)]))
+
+                        self.msg(diff_last, (200, 200, 0))
                         self.rgb.breath(tinct=(200, 200, 200), loops=3)
                         
                         time_stamp = time.strftime('%Y%m%d%H%M%S', time.gmtime(time.time() + 28800))
@@ -82,5 +97,5 @@ class Dvalue:
 
 
 if __name__ == '__main__':
-    guard = Dvalue()
-    guard.start()
+    dvalue = Dvalue()
+    dvalue.start()

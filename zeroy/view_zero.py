@@ -17,6 +17,7 @@ app = Flask(__name__)
 # app.config.update()
 rgb = RGB()
 lapse = LAPSE()
+dvalue = Dvalue()
 
 
 @app.route('/api/lapse')
@@ -38,6 +39,27 @@ def api_lapse():
         return jsonify(errorcode=0, records=str(lapse.frames))
     else:
         return jsonify(errorcode=-1, command='unknown command', status=lapse.running)
+
+
+@app.route('/api/dvaluy')
+def api_dvaluy():
+    cmd = request.args.get('cmd', default=False)
+    if 'start' == cmd:
+        if dvalue.running:
+            return jsonify(errorcode=1, msg='已经在进行中了')
+        else:
+            gap = request.args.get('gap', default=False)
+            cap = request.args.get('cap', default=False)
+            gap_value = int(gap) if gap else 60
+            cap_value = int(cap) if cap else 9999999999
+            print(gap, cap, gap_value, cap_value)
+            dvalue.start(gap=gap_value, cap=cap_value)
+            return jsonify(errorcode=0, gap=gap, cap=cap, start_time=time.ctime())
+    elif 'stop' == cmd:
+        dvalue.stop()
+        return jsonify(errorcode=0, records=str(dvalue.frames))
+    else:
+        return jsonify(errorcode=-1, command='unknown command', status=dvalue.running)
 
 
 @app.route('/api/info')
