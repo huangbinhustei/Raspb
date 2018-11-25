@@ -69,11 +69,14 @@ def api_photo():
 @app.route('/api/zero/info')
 def api_zero_info():
     # 调用 zero 的 api 函数
-    response = requests.get(zeroy + '/api/info')
-    if 200 == response.status_code:
-        return jsonify(response.json())
-    else:
-        return jsonify(errorcode=-1, msg='检查树莓派 Zero 是否启动了 flask', http_error_code=response.status_code)
+    try:
+        response = requests.get(zeroy + '/api/info')
+        if 200 == response.status_code:
+            return jsonify(response.json())
+        else:
+            return jsonify(errorcode=response.status_code, http_error_code=response.status_code)
+    except:
+        return jsonify(errorcode=-1, msg='检查树莓派 Zero 是否启动了 flask')
 
 
 @app.route('/api/zero/rgb')
@@ -83,22 +86,29 @@ def api_zero_rgb():
     r = request.args.get('r', default=None)
     g = request.args.get('g', default=None)
     b = request.args.get('b', default=None)    
-    response = requests.get(zeroy + '/api/rgb', params={"cmd":cmd, "r":r, "g":g, "b":b})
-    if 200 == response.status_code:
-        return jsonify(response.json())
-    else:
-        return jsonify(errorcode=-1, msg='检查树莓派 Zero 是否启动了 flask', http_error_code=response.status_code)
+    try:
+        response = requests.get(zeroy + '/api/rgb', params={"cmd":cmd, "r":r, "g":g, "b":b})
+        if 200 == response.status_code:
+            return jsonify(response.json())
+        else:
+            return jsonify(errorcode=response.status_code, http_error_code=response.status_code)
+    except:
+        return jsonify(errorcode=-1, msg='检查树莓派 Zero 是否启动了 flask')
+
 
 
 @app.route('/api/zero/photo')
 def api_zero_photo():
     # 调用 zero 的 api 函数
     name = request.args.get('name', default=None)
-    response = requests.get(zeroy + '/api/photo', params={"name":name})
-    if 200 == response.status_code:
-        return jsonify(response.json())
-    else:
-        return jsonify(errorcode=-1, msg='检查树莓派 Zero 是否启动了 flask', http_error_code=response.status_code)
+    try:
+        response = requests.get(zeroy + '/api/photo', params={"name":name})
+        if 200 == response.status_code:
+            return jsonify(response.json())
+        else:
+            return jsonify(errorcode=response.status_code, http_error_code=response.status_code)
+    except:
+        return jsonify(errorcode=-1, msg='检查树莓派 Zero 是否启动了 flask')
 
 
 @app.route('/api/zero/lapse')
@@ -107,11 +117,30 @@ def api_zero_lapse():
     cmd = request.args.get('cmd', default=None)
     gap = request.args.get('gap', default=None)
     cap = request.args.get('cap', default=None)
-    response = requests.get(zeroy + '/api/lapse', params={'cmd': cmd, 'gap':gap, 'cap':cap})
-    if 200 == response.status_code:
-        return jsonify(response.json())
-    else:
-        return jsonify(errorcode=-1, msg='检查树莓派 Zero 是否启动了 flask', http_error_code=response.status_code)
+    try:
+        response = requests.get(zeroy + '/api/lapse', params={'cmd': cmd, 'gap':gap, 'cap':cap})
+        if 200 == response.status_code:
+            return jsonify(response.json())
+        else:
+            return jsonify(errorcode=response.status_code, http_error_code=response.status_code)
+    except:
+        return jsonify(errorcode=-1, msg='检查树莓派 Zero 是否启动了 flask')
+
+
+@app.route('/api/zero/dvalue')
+def api_zero_dvalue():
+    # 调用 zero 的 api 函数
+    cmd = request.args.get('cmd', default=None)
+    gap = request.args.get('gap', default=None)
+    last = request.args.get('last', default=None)
+    try:
+        response = requests.get(zeroy + '/api/dvalue', params={'cmd': cmd, 'gap':gap, 'last':last})
+        if 200 == response.status_code:
+            return jsonify(response.json())
+        else:
+            return jsonify(errorcode=response.status_code, http_error_code=response.status_code)
+    except:
+        return jsonify(errorcode=-1, msg='检查树莓派 Zero 是否启动了 flask')
 
 
 def get_info(start, end):
