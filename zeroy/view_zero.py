@@ -11,8 +11,8 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 sys.path.append(os.path.join(basedir, os.path.pardir))
 from bxin import face, FangTang, qiniu_put
 from ioy import RGB
-from feature.lapsy import LAPSE
-from feature.dvaluy import Dvalue
+from base.Feature.lapsy import LAPSE
+from base.Feature.dvaluy import Dvalue
 
 app = Flask(__name__)
 # app.config.update()

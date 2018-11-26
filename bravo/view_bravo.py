@@ -9,8 +9,8 @@ from pyecharts import Line, Page
 import picamera
 
 from feature.sr04_video_guard import RECORDOR
-from feature.sys_info import get_cpu_info, get_ram_info, get_disk_info
-from data.sheets import *
+from base.Feature.sys_info import get_cpu_info, get_ram_info, get_disk_info
+from base.Data.sheets import *
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 sys.path.append(basedir)
