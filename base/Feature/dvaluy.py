@@ -12,7 +12,7 @@ from rpi_rf import RFDevice
 basedir = os.path.abspath(os.path.dirname(__file__))
 sys.path.append(os.path.join(basedir, os.path.pardir, os.path.pardir))
 from bxin import *
-from base.Feature.ioy import RGB
+from base.RasGpio.ioy import RGB
 
 
 class Dvalue:
