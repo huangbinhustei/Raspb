@@ -10,7 +10,7 @@ from picamera import PiCamera, Color
 basedir = os.path.abspath(os.path.dirname(__file__))
 sys.path.append(os.path.join(basedir, os.path.pardir, os.path.pardir))
 from bxin import face, FangTang, qiniu_put
-from ioy import SR04, SG90
+from base.RasGpio.ioy import SR04, SG90
 
 
 class RECORDOR(SR04, FangTang):

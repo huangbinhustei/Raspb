@@ -8,12 +8,13 @@ from sqlalchemy import and_
 from pyecharts import Line, Page
 import picamera
 
-from feature.sr04_video_guard import RECORDOR
-from base.Feature.sys_info import get_cpu_info, get_ram_info, get_disk_info
-from base.Data.sheets import *
 
 basedir = os.path.abspath(os.path.dirname(__file__))
-sys.path.append(basedir)
+sys.path.append(os.path.join(basedir, os.path.pardir))
+from base.Feature.sr04_video_guard import RECORDOR
+from base.Feature.sys_info import get_cpu_temp, get_cpu_percent, get_ram_info, get_disk_info
+from base.Data.sheets import *
+
 zeroy = "http://192.168.50.42:5000"
 
 app = Flask(__name__)
@@ -44,13 +45,10 @@ def api_guardor():
 
 @app.route('/api/info')
 def api_info():
-    cpu_temp, cpu_percent = get_cpu_info()
-    free_ram = get_ram_info()
-    free_disk = get_disk_info()
-    return jsonify(cpu_temp=cpu_temp,
-                   cpu_percent=cpu_percent,
-                   free_ram=free_ram,
-                   free_disk=free_disk,)
+    return jsonify(cpu_temp=get_cpu_temp(),
+                   cpu_percent=get_cpu_percent(),
+                   free_ram=get_ram_info(),
+                   free_disk=get_disk_info(),)
 
 
 @app.route('/api/photo')

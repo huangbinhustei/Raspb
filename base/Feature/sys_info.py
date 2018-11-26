@@ -4,12 +4,17 @@ import psutil
 import time
 
 
-def get_cpu_info():
+def get_cpu_temp():
     # Return CPU temperature as a float
     res = os.popen('vcgencmd measure_temp').readline()
     temperature = res.replace('temp=', '').replace("'C\n", "")
+    return float(temperature)
+
+
+def get_cpu_percent():
+    # Return CPU temperature as a float
     percent = psutil.cpu_percent()
-    return float(temperature), percent
+    return percent
 
 
 def get_ram_info():

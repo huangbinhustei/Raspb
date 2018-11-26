@@ -9,7 +9,7 @@ from flask import Flask, render_template, request, jsonify
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 sys.path.append(os.path.join(basedir, os.path.pardir))
-from base.RasGpio.bxin import face, FangTang, qiniu_put
+from bxin import face, FangTang, qiniu_put
 from base.RasGpio.ioy import RGB
 from base.Feature.lapsy import LAPSE
 from base.Feature.dvaluy import Dvalue
