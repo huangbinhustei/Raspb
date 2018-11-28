@@ -119,11 +119,17 @@ class OLED:
 
         self.font = ImageFont.truetype('/usr/share/fonts/truetype/wqy/wqy-microhei.ttc', 16)
         self.offset = 21
+        self.needDel = True
+        self.delling()
+
+    def delling(self):
+        self.needDel = True
         t1 = threading.Thread(target=self.__deling, args=())
         t1.start()
+        
 
     def __deling(self):
-        while True:
+        while self.needDel:
             time.sleep(1)
             if time.time() - self.last_scroll >= 3:
                 self.scroll(' ')
@@ -169,6 +175,7 @@ class OLED:
     def cls(self):
         self.disp.clear()
         self.disp.display()
+        self.needDel = False
 
 
 class BUZZER:
