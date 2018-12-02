@@ -1,6 +1,7 @@
 import os
 import time
 import sys
+import redis
 
 from flask import Flask, render_template, request, jsonify
 import requests
@@ -25,6 +26,74 @@ height=480
 
 guardor = RECORDOR()
 
+
+def connect():
+    try:
+        pool = redis.ConnectionPool(host='127.0.0.1', port=6379, decode_responses=True)
+        return True, redis.Redis(connection_pool=pool) 
+    except:
+        print('请检查 Redis 是否打开')
+        return False, False
+
+# 'cpu_temp': cpu_temp,
+# 'cpu_percent': cpu_percent,
+# 'free_ram': free_ram,
+# 'free_disk': free_disk,
+# 'zero_cpu_temp': zero_cpu_temp,
+# 'zero_free_ram': zero_free_ram,
+# 'zero_free_disk': zero_free_disk })
+
+@app.route('/info')
+def view_info():
+    hour_ago = time.time() - 3600
+    flag, rdb = connect()
+    assert flag
+
+    line_cpu = Line(width=width, height=height, title='CPU 监控')
+    line_space = Line(width=width, height=height, title='DISK 监控')
+    stamps = []
+    cpuP_b = []
+    cpuT_b = []
+    cpuT_z = []
+    ram_b = []
+    ram_z = []
+    disk_b = []
+    disk_z = []
+
+    intKeys = [int(key) for key in rdb.keys() if int(key) > hour_ago]
+
+    if not intKeys:
+        return ('<h2>sth wrong')
+
+    for key in sorted(intKeys):
+        stamps.append(time.strftime('%H:%M', time.gmtime(key + 28800)))
+        tmpD = rdb.hgetall(str(key))
+        cpuP_b.append(tmpD['cpu_percent'])
+        cpuT_b.append(tmpD['cpu_temp'])
+        cpuT_z.append(tmpD['zero_cpu_temp'])
+        ram_b.append(tmpD['free_ram'])
+        ram_z.append(tmpD['zero_free_ram'])
+        disk_b.append(tmpD['free_disk'])
+        disk_z.append(tmpD['zero_free_disk'])
+    
+    line_cpu.add('使用率', stamps, cpuP_b, line_width=2, is_smooth=True)
+    line_cpu.add('温度_3B', stamps, cpuT_b, line_width=2, is_smooth=True)
+    line_cpu.add('温度_Z', stamps, cpuT_z, line_width=2, is_smooth=True)
+
+    line_space.add('内存_3B', stamps, ram_b, line_width=2, is_smooth=True)
+    line_space.add('内存_Z', stamps, ram_z, line_width=2, is_smooth=True)
+    
+    if time.localtime().tm_hour >= 21 or time.localtime().tm_hour <= 6:
+        line_cpu.use_theme('dark')
+        line_space.use_theme('dark')
+    js_list = list(set(line_cpu.get_js_dependencies() + line_space.get_js_dependencies()))
+    return render_template(
+        "pyecharts.html",
+        cpu=line_cpu.render_embed(),
+        space=line_space.render_embed(),
+        host='https://pyecharts.github.io/assets/js',
+        script_list=js_list,
+    )
 
 @app.route('/api/guardor')
 def api_guardor():

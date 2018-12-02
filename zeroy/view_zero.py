@@ -13,6 +13,7 @@ from bxin import face, FangTang, qiniu_put
 from base.RasGpio.ioy import RGB
 from base.Feature.lapsy import LAPSE
 from base.Feature.dvaluy import Dvalue
+from base.Feature.sys_info import get_cpu_temp, get_cpu_percent, get_ram_info, get_disk_info
 
 app = Flask(__name__)
 # app.config.update()
@@ -65,20 +66,24 @@ def api_dvalue():
 
 @app.route('/api/info')
 def api_info():
-    file_cpu_temp = os.popen('vcgencmd measure_temp').readline()
-    cpu_temp = float(file_cpu_temp.replace('temp=', '').replace("'C\n", ""))
+    # file_cpu_temp = os.popen('vcgencmd measure_temp').readline()
+    # cpu_temp = float(file_cpu_temp.replace('temp=', '').replace("'C\n", ""))
 
-    file_ram = os.popen('free')
-    free_ram = file_ram.readlines()[1].split()
-    free_ram = round(int(free_ram[3]) / 1024, 1)
+    # file_ram = os.popen('free')
+    # free_ram = file_ram.readlines()[1].split()
+    # free_ram = round(int(free_ram[3]) / 1024, 1)
 
-    file_sd = os.popen("df -h /")
-    free_disk = file_sd.readlines()[1].split()
-    free_disk =  float(free_disk[3].replace('G', ''))
+    # file_sd = os.popen("df -h /")
+    # free_disk = file_sd.readlines()[1].split()
+    # free_disk =  float(free_disk[3].replace('G', ''))
 
-    return jsonify(cpu_temp=cpu_temp,
-                   free_ram=free_ram,
-                   free_disk=free_disk,)
+    # return jsonify(cpu_temp=cpu_temp,
+    #                free_ram=free_ram,
+    #                free_disk=free_disk,)
+    
+    return jsonify(cpu_temp=get_cpu_temp(),
+                   free_ram=get_ram_info(),
+                   free_disk=get_disk_info(),)
 
 
 @app.route('/api/rgb')
