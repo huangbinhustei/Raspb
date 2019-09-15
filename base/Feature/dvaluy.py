@@ -6,31 +6,31 @@ import threading
 import cv2
 from picamera import PiCamera
 from picamera.array import PiRGBArray
-from rpi_rf import RFDevice
+# from rpi_rf import RFDevice
 
 
 basedir = os.path.abspath(os.path.dirname(__file__))
-sys.path.append(os.path.join(basedir, os.path.pardir, os.path.pardir))
-from bxin import *
+sys.path.append(os.path.join(basedir, os.path.pardir, os.path.pardir, os.path.pardir))
+from binxin.bxin import *
 from base.RasGpio.ioy import RGB
 
 
 class Dvalue:
     def __init__(self, send_pin=25):
         self.running = False
-        self.rf = RFDevice(send_pin)
-        self.rf.enable_tx()
+        # self.rf = RFDevice(send_pin)
+        # self.rf.enable_tx()
         self.records = 0
 
     
-    def _msg(self, info, protocol, pulselength, tinct):
-        for _ in range(5):
-            self.rf.tx_code(info, protocol, pulselength)
-        self.rf.tx_code(100, protocol, pulselength)
+    # def _msg(self, info, protocol, pulselength, tinct):
+    #     for _ in range(5):
+    #         self.rf.tx_code(info, protocol, pulselength)
+    #     self.rf.tx_code(100, protocol, pulselength)
 
-    def msg(self, info, tinct):
-        tf = threading.Thread(target=self._msg, args=(info, None, None, tinct))
-        tf.start()
+    # def msg(self, info, tinct):
+    #     tf = threading.Thread(target=self._msg, args=(info, None, None, tinct))
+    #     tf.start()
 
     def saving(self, frame):
         _, img = cv2.imencode('.jpg', frame)
