@@ -9,11 +9,13 @@ from flask import Flask, render_template, request, jsonify
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 sys.path.append(os.path.join(basedir, os.path.pardir))
-from bxin import face, FangTang, qiniu_put
+sys.path.append(os.path.join(basedir, os.path.pardir, os.path.pardir))
 from base.RasGpio.ioy import RGB
 from base.Feature.lapsy import LAPSE
 from base.Feature.dvaluy import Dvalue
 from base.Feature.sys_info import get_cpu_temp, get_cpu_percent, get_ram_info, get_disk_info
+from binxin.bxin import face, FangTang, qiniu_put
+
 
 app = Flask(__name__)
 # app.config.update()
