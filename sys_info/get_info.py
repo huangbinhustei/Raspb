@@ -50,6 +50,7 @@ if __name__ == '__main__':
         cpu_temp=cpu_temp,
         free_ram=free_ram,
         free_disk=free_disk)
-    s.add(new_info)
-    s.commit()
-    s.close()
+    print(now,':', cpu_temp)
+    # s.add(new_info)
+    # s.commit()
+    # s.close()
