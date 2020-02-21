@@ -15,6 +15,26 @@ sys.path.append(os.path.join(basedir, os.path.pardir))
 from base.RasGpio.ioy import RGB
 
 
+def time_laspe(fps=60, duration=3600, gap=1, resolution=(1280, 720), path='Laspe', video_name=False):
+    cap = cv2.VideoCapture(0)
+    cap.set(3, resolution[0])
+    cap.set(4, resolution[1])
+    count = 0
+    if not video_name:
+        video_name = time.strftime('%Y年%m月%d日_%M时%I分%S秒' , time.localtime()) + '.avi'
+    video_writer = cv2.VideoWriter(video_name, cv2.VideoWriter_fourcc(*'XVID'), fps, resolution)
+
+    while count < duration:
+        _ret, frame = cap.read()
+        time.sleep(gap)
+        count += 1
+        video_writer.write(frame)
+        if cv2.waitKey(1) & 0xff == ord('q'):
+            break
+    video_writer.release()
+    cap.release()
+
+
 def take_photo(name='timing', resolution=(1280, 1024), path='Saving'):
     if os.path.exists(os.path.join(path, name + '.jpg')):
         return {
@@ -32,9 +52,8 @@ def take_photo(name='timing', resolution=(1280, 1024), path='Saving'):
 
         if 'timing' == name:
             name = os.path.join(path, time.strftime('%Y%m%d_%H%M%S', time.gmtime(time.time() + 28800)).lower())
+        camera.capture(f'{name}.jpg')
 
-        camera.capture(f'{name}_{str(i)}.jpg')
-    
     return {
             'status': True,
             'error_code': 0,
@@ -42,14 +61,14 @@ def take_photo(name='timing', resolution=(1280, 1024), path='Saving'):
         }
 
 
-def continuous_shooting(maxcount=30 * 30, gap=5, span=86400, resolution=(800, 600), path='Continuous'):
+def continuous_shooting(maxcount=30*30, gap=1, span=86400, resolution=(800, 600), path='Continuous'):
     with PiCamera() as camera:
         camera.resolution = resolution
         camera.start_preview()
         end = time.time() + span
         count = 0
         while count < maxcount and time.time() <= end:
-            name = os.path.join(path, time.strftime('%Y%m%d_%H%M%S', time.gmtime(time.time() + 28800)).lower())
+            name = os.path.join(path, str(count).zfill(5))
             camera.capture(name + '.jpg')
             time.sleep(gap)
             count += 1
@@ -150,5 +169,7 @@ class DHashPhoto:
 
 
 if __name__ == '__main__':
-    take_photo()
-    # continuous_shooting()
+    # take_photo()
+    # continuous_shooting(maxcount=30)
+    time_laspe()
+    # time_laspe(video_name='1.avi')
