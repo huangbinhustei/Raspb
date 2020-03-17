@@ -15,22 +15,41 @@ sys.path.append(os.path.join(basedir, os.path.pardir))
 from base.RasGpio.ioy import RGB
 
 
-def time_laspe(fps=60, duration=3600, gap=1, resolution=(1280, 720), path='Laspe', video_name=False):
+def time_laspe(fps=60, duration=3600 * 8, gap=1, resolution=(1280, 720), path='Laspe', video_name=False):
     cap = cv2.VideoCapture(0)
     cap.set(3, resolution[0])
     cap.set(4, resolution[1])
     count = 0
     if not video_name:
-        video_name = time.strftime('%Y年%m月%d日_%M时%I分%S秒' , time.localtime()) + '.avi'
+        video_name = time.strftime('%Y年%m月%d日_%H时%M分%S秒' , time.localtime()) + '.avi'
     video_writer = cv2.VideoWriter(video_name, cv2.VideoWriter_fourcc(*'XVID'), fps, resolution)
 
     while count < duration:
         _ret, frame = cap.read()
-        time.sleep(gap)
         count += 1
+        label = time.strftime('%Y %m%d %H:%M:%S' , time.localtime())
+        frame = cv2.putText(
+            frame, 
+            label,
+            (32, 32),   # (x, y), 
+            cv2.FONT_HERSHEY_SIMPLEX, # 字体, 
+            0.7,    # 大小 
+            (0, 0, 0),  # 颜色 
+            2, # 宽度
+            )
+        frame = cv2.putText(
+            frame, 
+            label,
+            (30, 30),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.7,
+            (255, 255, 0),
+            2,
+            )
         video_writer.write(frame)
         if cv2.waitKey(1) & 0xff == ord('q'):
             break
+        time.sleep(gap)
     video_writer.release()
     cap.release()
 
